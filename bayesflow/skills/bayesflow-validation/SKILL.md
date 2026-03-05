@@ -170,7 +170,7 @@ plot_diagnostic_dashboard(
   use 500+ for reliable metrics
 - **Ignoring calibration floor** — setting `target_calibration_error` below
   the finite-sample floor causes the Lagrangian to push gamma too high
-- **Not caching validation data** — regenerating 500 sims × 48 conditions per
+- **Not caching validation data** — regenerating 500 sims x 48 conditions per
   HPO trial wastes enormous compute; generate once and reuse
 - **Single-point validation** — a single (N, effect_size) doesn't represent
   model performance across the design space

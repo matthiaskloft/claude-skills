@@ -1,0 +1,28 @@
+{
+  "name": "matthiaskloft-claude-skills",
+  "owner": {
+    "name": "matthiaskloft",
+    "email": "mkaystrat88@gmail.com"
+  },
+  "metadata": {
+    "description": "Claude Code plugins for scientific computing and Bayesian inference workflows.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "bayesflow-skills",
+      "source": "./bayesflow",
+      "description": "Domain-specific skills for BayesFlow 2.x extension packages. Provides patterns for simulators, adapters, Keras 3 backend-agnostic math, testing, SBC validation, GPU memory management, and packaging conventions.",
+      "version": "0.1.0",
+      "author": {
+        "name": "matthiaskloft"
+      },
+      "homepage": "https://github.com/matthiaskloft/claude-skills",
+      "repository": "https://github.com/matthiaskloft/claude-skills",
+      "license": "MIT",
+      "keywords": ["bayesflow", "keras", "simulation", "bayesian-inference", "sbc"],
+      "category": "scientific-computing",
+      "tags": ["bayesflow", "keras", "bayesian", "simulation", "sbc", "gpu-memory"]
+    }
+  ]
+}
