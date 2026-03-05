@@ -1,0 +1,5 @@
+{
+  "name": "bayesflow-skills",
+  "description": "Domain-specific skills for BayesFlow 2.x extension packages. Provides patterns for simulators, adapters, Keras 3 backend-agnostic math, testing, SBC validation, GPU memory management, and packaging conventions.",
+  "version": "0.1.0"
+}
