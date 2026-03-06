@@ -5,10 +5,25 @@
     "email": "mkaystrat88@gmail.com"
   },
   "metadata": {
-    "description": "Claude Code plugins for scientific computing and Bayesian inference workflows.",
+    "description": "Claude Code plugins for code quality, scientific computing, and Bayesian inference workflows.",
     "version": "0.1.0"
   },
   "plugins": [
+    {
+      "name": "code-sentinel",
+      "source": "./code-sentinel",
+      "description": "Independent code review agent that audits uncommitted changes for bugs, security issues, silent errors, and logical inconsistencies. Specialised for R and Python.",
+      "version": "0.1.0",
+      "author": {
+        "name": "matthiaskloft"
+      },
+      "homepage": "https://github.com/matthiaskloft/claude-skills",
+      "repository": "https://github.com/matthiaskloft/claude-skills",
+      "license": "MIT",
+      "keywords": ["code-review", "security", "python", "r", "pre-commit"],
+      "category": "code-quality",
+      "tags": ["code-review", "security", "silent-errors", "python", "r"]
+    },
     {
       "name": "bayesflow-skills",
       "source": "./bayesflow",

@@ -1,0 +1,5 @@
+{
+  "name": "code-sentinel",
+  "description": "Independent code review agent that audits uncommitted changes for bugs, security issues, silent errors, and logical inconsistencies. Specialised for R and Python.",
+  "version": "0.1.0"
+}
