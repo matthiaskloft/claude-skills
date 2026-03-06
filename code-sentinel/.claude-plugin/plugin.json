@@ -1,0 +1,11 @@
+{
+  "name": "code-sentinel",
+  "description": "Orchestrates independent code review via specialised subagents that audit uncommitted changes for bugs, security issues, silent errors, and logical inconsistencies. Specialised for R and Python.",
+  "version": "0.1.0",
+  "author": {
+    "name": "matthiaskloft"
+  },
+  "repository": "https://github.com/matthiaskloft/claude-skills",
+  "license": "MIT",
+  "keywords": ["code-review", "security", "python", "r", "pre-commit"]
+}
