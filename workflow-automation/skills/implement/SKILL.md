@@ -106,8 +106,13 @@ Run a comprehensive code review cycle until the code is clean:
 
 2. If the review reports findings: fix them and run the review again.
 
-3. Repeat until the review reports zero blockers or warnings. Suggestions
-   may be deferred — document them in the plan's Notes section and continue.
+3. Repeat until no fixes were needed — i.e., zero blockers or warnings
+   remain. Suggestions may be deferred — document them in the plan's Notes
+   section and continue.
+
+   Cap at 3 total review iterations. If the 3rd review still returns
+   blockers or warnings that require fixes, stop and inform the user
+   rather than starting another fix/review cycle.
 
 ### 6. Update Documentation
 

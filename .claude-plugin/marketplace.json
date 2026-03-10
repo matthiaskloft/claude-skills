@@ -38,6 +38,21 @@
       "keywords": ["bayesflow", "keras", "simulation", "bayesian-inference", "sbc"],
       "category": "scientific-computing",
       "tags": ["bayesflow", "keras", "bayesian", "simulation", "sbc", "gpu-memory"]
+    },
+    {
+      "name": "workflow-automation",
+      "source": "./workflow-automation",
+      "description": "Plan/Implement/Ship workflow for feature development. Provides skills for structured planning, worktree-based implementation, and automated review/PR/CI shipping.",
+      "version": "0.5.0",
+      "author": {
+        "name": "matthiaskloft"
+      },
+      "homepage": "https://github.com/matthiaskloft/claude-skills",
+      "repository": "https://github.com/matthiaskloft/claude-skills",
+      "license": "MIT",
+      "keywords": ["workflow", "automation", "planning", "ci-cd", "pull-request"],
+      "category": "workflow",
+      "tags": ["workflow", "planning", "implementation", "shipping", "ci-cd", "pull-request"]
     }
   ]
 }

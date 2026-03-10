@@ -61,21 +61,45 @@ Key sections to get right:
 - **Verification**: How to confirm correctness beyond "tests pass". Align
   with the project's review conventions if a review checklist exists.
 
-### 3. Independent Plan Review
+### 3. Independent Plan Review (Iterative)
 
-Before presenting the plan for user approval, spawn a review agent:
+Review the plan in a loop until no new issues are found:
 
-- Use the Agent tool (`subagent_type=Explore`) with this prompt:
-  "Review this feature plan for feasibility, gaps, risks, and scope issues.
-  For each finding, state severity (blocker/warning/suggestion) and a
-  concrete recommendation. End with: Review complete: X findings."
-- Pass the plan document and any relevant source files the plan references
-- Wait for the reviewer to return
+**Review loop:**
 
-**Handling feedback:**
-- **Blockers**: Revise the plan to address them before presenting to the user
-- **Warnings/suggestions**: Include them in the plan's "Review Feedback"
-  section for the user to see
+1. Spawn a review agent using the Agent tool (`subagent_type=Explore`) with
+   this prompt: "Review this feature plan for feasibility, gaps, risks, and
+   scope issues. For each finding, state severity (blocker/warning/suggestion)
+   and a concrete recommendation. End with: Review complete: X findings
+   (Y blockers, Z warnings)."
+   - Pass the plan document and any relevant source files the plan references
+   - Wait for the reviewer to return
+
+2. Handle feedback:
+   - **Blockers**: Revise the plan to address every blocker
+   - **Warnings**: Evaluate each warning — revise the plan if warranted,
+     otherwise note it in the plan's "Review Feedback" section
+   - **Suggestions**: Include in the plan's "Review Feedback" section for
+     the user to see
+
+3. If any revisions were made in step 2, repeat the review loop: re-run
+   step 1 on the updated plan. Prepend the reviewer prompt with: "This is
+   iteration N. Changes since last review: [list the specific sections
+   revised and what changed]." This helps the reviewer focus on the changes
+   and avoid re-raising already-addressed issues.
+
+4. Stop when **no revisions were made in step 2** — i.e., all blockers have
+   been addressed, all warnings have been either addressed or noted without
+   requiring changes, and only suggestions (or no findings) remain.
+
+5. Record the iteration count in the plan's "Review Feedback" section
+   (e.g., "Reviewed in 2 iterations") so the user can gauge how contested
+   the plan was.
+
+**Guard rail**: Cap the loop at 3 total review iterations. If the 3rd
+review still returns blockers that would require more revisions, stop
+there, present the plan with those unresolved issues clearly flagged,
+and ask the user for guidance instead of starting a 4th cycle.
 
 **Fallback**: If the Agent tool is unavailable, note in the plan that it
 was not independently reviewed and present it directly to the user.
@@ -123,8 +147,9 @@ the feature from the plan, or implement it directly in the current session.
   splitting it into separate features with their own plans.
 - **User rejects the plan**: Ask what they'd change — adjust scope, rethink
   design decisions, or offer to skip planning and implement directly.
-- **Reviewer finds blockers**: Revise the plan and re-run the review before
-  presenting to the user. Do not present a plan with known blockers.
+- **Reviewer finds blockers**: The iterative review loop (Step 3) handles
+  this automatically. If blockers persist after 3 iterations, present the
+  plan with unresolved issues flagged and ask for user guidance.
 - **Ambiguous request**: If the user says "just plan it" without answering
   clarifying questions, make reasonable assumptions and document them
   explicitly in the plan's Notes section.
