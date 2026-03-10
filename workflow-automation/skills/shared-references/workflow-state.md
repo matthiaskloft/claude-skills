@@ -95,6 +95,8 @@ On startup, before doing anything else:
     the `in_flight_pr` field (set to `null`) and leave the rest of the
     state intact. The successor phase's fields (`phase`, `skill`,
     `step`, `branch`, `worktree`) must be preserved for resume.
+    Exception: if no `TODO` phases remain in the plan, this is the
+    final phase — delete the state file as the pipeline is complete.
 
 ### implement-ship
 - Delegates to implement and ship, which handle their own state.

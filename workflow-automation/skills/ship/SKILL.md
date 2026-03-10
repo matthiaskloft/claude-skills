@@ -104,17 +104,18 @@ Delegate CI monitoring and auto-merge to the **monitor-pr** skill:
 
 **Pipeline mode** (when `mode` is `"implement-ship-all"` in the state
 file): After monitor-pr creates the cron job and returns, **stop here**.
-Do NOT wait for the merge. Do NOT proceed to Steps 5–7. Return control
-to the calling skill (`implement-ship-all`) with the PR number and
-monitor cron ID. The calling skill handles the pipeline — it will move
-on to implementing the next phase while this PR is monitored in the
-background. The monitor-pr cron handles post-merge cleanup and plan
-updates autonomously.
+Do NOT wait for the merge. Do NOT proceed to Steps 5–7. The PR number
+and monitor cron ID are already recorded in the state file for the
+calling skill to read. Return control to `implement-ship-all`, which
+will move on to implementing the next phase while this PR is monitored
+in the background. The monitor-pr cron handles post-merge cleanup and
+plan updates autonomously.
 
-**Normal mode** (interactive or `implement-ship`): After monitor-pr
+**Normal mode** (`single` or `implement-ship`): After monitor-pr
 creates the cron job, wait for the merge to complete. Poll every 2
 minutes with `gh pr view <pr-number> --json state --jq '.state'` until
-the state is `MERGED`. Then continue to Step 5.
+the state is `MERGED`. Then continue to Step 5. (The user can interrupt
+this polling at any time — monitor-pr continues in the background.)
 
 If monitor-pr reports a blocker needing human input, help the user
 resolve it, then re-invoke `/monitor-pr` to resume.

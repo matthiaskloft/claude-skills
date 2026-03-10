@@ -143,9 +143,10 @@ after shipping is complete.
     (`git pull origin <main-branch>`)
   - **Pipeline mode** (when `implement-ship-all` provides a
     `base_branch`): Use the predecessor phase's feature branch instead
-    of main. Fetch it first (`git fetch origin <base-branch>`). This
-    ensures the new phase has access to code from the predecessor that
-    hasn't merged yet.
+    of main. This ensures the new phase has access to code from the
+    predecessor that hasn't merged yet.
+    1. Fetch the base branch: `git fetch origin <base-branch>`
+    2. Create the worktree (see below)
 - Create a worktree for the phase:
   `git worktree add -b feat/<feature>-<phase> ../feat-<feature>-<phase> origin/<base-branch>`
 - Work in the worktree directory

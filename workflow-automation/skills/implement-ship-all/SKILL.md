@@ -161,7 +161,8 @@ PR to merge (monitor-pr handles this). Check every 2 minutes until
 merged, then proceed to Completion.
 
 **Autonomous mode**: When this skill invokes implement and ship, those
-skills MUST skip all "Proceed?" and "Confirm?" prompts. Specifically:
+skills MUST skip all "Proceed?" and "Confirm?" prompts (detected via
+the `mode: "implement-ship-all"` field in the state file). Specifically:
 - implement Step 2: Do not ask "Starting {phase}. Proceed?" — just
   start the phase.
 - implement-ship Step 2 (gate check): Only stop if the phase is NOT
