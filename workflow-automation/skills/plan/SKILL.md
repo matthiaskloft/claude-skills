@@ -83,20 +83,22 @@ Review the plan in a loop until no new issues are found:
      the user to see
 
 3. If any revisions were made in step 2, repeat the review loop: re-run
-   step 1 on the updated plan. Include a summary of what was revised since
-   the last review so the reviewer can focus on the changes and avoid
-   re-raising already-addressed issues.
+   step 1 on the updated plan. Prepend the reviewer prompt with: "This is
+   iteration N. Changes since last review: [list the specific sections
+   revised and what changed]." This helps the reviewer focus on the changes
+   and avoid re-raising already-addressed issues.
 
-4. Stop when the reviewer returns **0 blockers and 0 warnings that require
-   changes** — i.e., only suggestions or no findings remain.
+4. Stop when **no revisions were made in step 2** — i.e., all blockers have
+   been addressed, all warnings have been either addressed or noted without
+   requiring changes, and only suggestions (or no findings) remain.
 
 5. Record the iteration count in the plan's "Review Feedback" section
    (e.g., "Reviewed in 2 iterations") so the user can gauge how contested
    the plan was.
 
-**Guard rail**: Cap the loop at 3 iterations. If blockers persist after 3
-rounds, present the plan to the user with the unresolved issues clearly
-flagged and ask for guidance.
+**Guard rail**: Cap the loop at 3 total iterations. If blockers remain
+unresolved after the 3rd iteration, present the plan to the user with the
+unresolved issues clearly flagged and ask for guidance.
 
 **Fallback**: If the Agent tool is unavailable, note in the plan that it
 was not independently reviewed and present it directly to the user.
