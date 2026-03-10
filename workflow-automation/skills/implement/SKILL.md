@@ -147,7 +147,7 @@ after shipping is complete.
     ensures the new phase has access to code from the predecessor that
     hasn't merged yet.
 - Create a worktree for the phase:
-  `git worktree add ../feat-<feature>-<phase> <base-branch> -b feat/<feature>-<phase>`
+  `git worktree add -b feat/<feature>-<phase> ../feat-<feature>-<phase> origin/<base-branch>`
 - Work in the worktree directory
 - The **ship** skill handles committing, PR, and cleanup
 - If abandoning a phase, ask the user before deleting the worktree and branch

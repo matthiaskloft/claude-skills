@@ -87,7 +87,14 @@ On startup, before doing anything else:
 
 ### monitor-pr
 - **Step 4** (cron created): Update skill=monitor-pr, set monitor_cron_id
-- **Post-merge cleanup**: Clear the state file after successful merge
+- **Post-merge cleanup**:
+  - **Normal mode** (`single` or `implement-ship`): Clear (delete) the
+    state file after successful merge.
+  - **Pipeline mode** (`implement-ship-all`): Do NOT delete the state
+    file — it may be tracking the successor phase. Instead, clear only
+    the `in_flight_pr` field (set to `null`) and leave the rest of the
+    state intact. The successor phase's fields (`phase`, `skill`,
+    `step`, `branch`, `worktree`) must be preserved for resume.
 
 ### implement-ship
 - Delegates to implement and ship, which handle their own state.

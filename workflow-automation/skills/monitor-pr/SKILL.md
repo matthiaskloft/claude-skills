@@ -124,8 +124,9 @@ The user can stop monitoring manually by saying "stop monitoring" or
 
 The following is the prompt text to use with CronCreate. Replace
 `{pr_number}`, `{branch}`, `{worktree_path}`, `{merge_strategy}`,
-`{main_branch}`, and `{cron_job_id}` with actual values at creation
-time.
+`{main_branch}`, `{cron_job_id}`, and `{mode}` with actual values at
+creation time. `{mode}` is the workflow mode from the state file
+(`single`, `implement-ship`, or `implement-ship-all`).
 
 ```
 Check the status of PR #{pr_number} (branch: {branch}) and take action:
@@ -160,10 +161,11 @@ Check the status of PR #{pr_number} (branch: {branch}) and take action:
    gh pr merge {pr_number} {merge_strategy} --delete-branch
    - On success: cancel this cron job (CronDelete job {cron_job_id}). Say "PR #{pr_number} merged successfully."
      Then clean up:
-     a. Check if another worktree's branch is based on {branch} by running: git branch --contains {branch} | grep -v {branch}. If other branches depend on it, do NOT delete the local branch — a successor phase may need it for rebase. Only delete the worktree (if path is not "none"): git worktree remove {worktree_path}.
-     b. If no other branches depend on it: remove worktree (if not "none") with git worktree remove {worktree_path}, and delete local branch with git branch -d {branch}.
+     a. Check whether this branch is checked out in any other worktree by running: git worktree list --porcelain | grep -F "branch refs/heads/{branch}". If it is, do NOT delete the local branch — a successor phase may need it for rebase. Only delete the worktree (if path is not "none") with git worktree remove {worktree_path}.
+     b. If the branch is not checked out in any other worktree: remove the worktree (if not "none") with git worktree remove {worktree_path}, and delete the local branch with git branch -d {branch}.
      c. Run git pull origin {main_branch}.
      Check if a plan-*.md document exists and update the current phase to MERGED with the PR URL. Check for remaining TODO phases and inform the user.
+     d. Update .workflow-state.json: if mode is "implement-ship-all", do NOT delete the state file — only set in_flight_pr to null (the file tracks the successor phase). If mode is "single" or "implement-ship", delete the state file.
    - On failure: report the error to the user. Do NOT cancel monitoring — the issue may resolve on the next cycle.
 ```
 

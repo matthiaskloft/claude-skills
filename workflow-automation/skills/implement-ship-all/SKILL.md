@@ -26,9 +26,15 @@ is set to `"implement-ship-all"`.
 `mode: "implement-ship-all"`, a previous session was running the
 pipeline loop. Read the plan's status table to determine phase statuses.
 Resume based on the state:
-- If `in_flight_pr` exists, check the PR status. If merged, clear it
-  and continue. If open, verify monitor-pr is active (re-create the
-  cron if the session died).
+- If `in_flight_pr` exists, check the PR status. If merged, clear
+  `in_flight_pr` and continue. If open, verify monitor-pr is active
+  (re-create the cron if the session died).
+- **Crash window recovery**: If `in_flight_pr` is null but `skill` is
+  `"monitor-pr"` or `"ship"` with a `pr_number` set, the session
+  crashed between starting the monitor and recording `in_flight_pr`.
+  Treat the current state's PR fields as the in-flight predecessor:
+  move `phase`, `branch`, `pr_number`, and `monitor_cron_id` into
+  `in_flight_pr`, then look at the plan to find the next `TODO` phase.
 - Find the next `TODO` or `IN_PROGRESS` phase and resume the pipeline
   from there.
 - Print "Resuming autonomous run: {N} phases remaining" and continue
