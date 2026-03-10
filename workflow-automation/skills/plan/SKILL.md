@@ -96,9 +96,10 @@ Review the plan in a loop until no new issues are found:
    (e.g., "Reviewed in 2 iterations") so the user can gauge how contested
    the plan was.
 
-**Guard rail**: Cap the loop at 3 total iterations. If blockers remain
-unresolved after the 3rd iteration, present the plan to the user with the
-unresolved issues clearly flagged and ask for guidance.
+**Guard rail**: Cap the loop at 3 total review iterations. If the 3rd
+review still returns blockers that would require more revisions, stop
+there, present the plan with those unresolved issues clearly flagged,
+and ask the user for guidance instead of starting a 4th cycle.
 
 **Fallback**: If the Agent tool is unavailable, note in the plan that it
 was not independently reviewed and present it directly to the user.
