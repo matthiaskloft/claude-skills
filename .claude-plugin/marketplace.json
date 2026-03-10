@@ -1,58 +1,30 @@
 {
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "matthiaskloft-claude-skills",
+  "version": "1.0.0",
+  "description": "Claude Code plugins for code quality, scientific computing, and Bayesian inference workflows.",
   "owner": {
     "name": "matthiaskloft",
     "email": "mkaystrat88@gmail.com"
   },
-  "metadata": {
-    "description": "Claude Code plugins for code quality, scientific computing, and Bayesian inference workflows.",
-    "version": "0.1.0"
-  },
   "plugins": [
     {
       "name": "code-sentinel",
-      "source": "./code-sentinel",
       "description": "Orchestrates independent code review via specialised subagents that audit uncommitted changes for bugs, security issues, silent errors, and logical inconsistencies. Specialised for R and Python.",
-      "version": "0.1.0",
-      "author": {
-        "name": "matthiaskloft"
-      },
-      "homepage": "https://github.com/matthiaskloft/claude-skills",
-      "repository": "https://github.com/matthiaskloft/claude-skills",
-      "license": "MIT",
-      "keywords": ["code-review", "security", "python", "r", "pre-commit"],
-      "category": "code-quality",
-      "tags": ["code-review", "security", "silent-errors", "python", "r"]
+      "source": "./code-sentinel",
+      "category": "code-quality"
     },
     {
       "name": "bayesflow-skills",
-      "source": "./bayesflow",
       "description": "Domain-specific skills for BayesFlow 2.x extension packages. Provides patterns for simulators, adapters, Keras 3 backend-agnostic math, testing, SBC validation, GPU memory management, and packaging conventions.",
-      "version": "0.1.0",
-      "author": {
-        "name": "matthiaskloft"
-      },
-      "homepage": "https://github.com/matthiaskloft/claude-skills",
-      "repository": "https://github.com/matthiaskloft/claude-skills",
-      "license": "MIT",
-      "keywords": ["bayesflow", "keras", "simulation", "bayesian-inference", "sbc"],
-      "category": "scientific-computing",
-      "tags": ["bayesflow", "keras", "bayesian", "simulation", "sbc", "gpu-memory"]
+      "source": "./bayesflow",
+      "category": "scientific-computing"
     },
     {
       "name": "workflow-automation",
-      "source": "./workflow-automation",
       "description": "Plan/Implement/Ship workflow for feature development. Provides skills for structured planning, worktree-based implementation, and automated review/PR/CI shipping.",
-      "version": "0.5.0",
-      "author": {
-        "name": "matthiaskloft"
-      },
-      "homepage": "https://github.com/matthiaskloft/claude-skills",
-      "repository": "https://github.com/matthiaskloft/claude-skills",
-      "license": "MIT",
-      "keywords": ["workflow", "automation", "planning", "ci-cd", "pull-request"],
-      "category": "workflow",
-      "tags": ["workflow", "planning", "implementation", "shipping", "ci-cd", "pull-request"]
+      "source": "./workflow-automation",
+      "category": "workflow"
     }
   ]
 }
