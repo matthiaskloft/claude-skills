@@ -17,7 +17,7 @@ opening a pull request, monitoring CI, and merging.
 ## State Tracking
 
 This skill uses `.workflow-state.json` for cross-session resume.
-See `../shared-references/workflow-state.md` for the full protocol.
+See `../../shared-references/workflow-state.md` for the full protocol.
 
 **On startup**: Check for `.workflow-state.json` in the plan's directory.
 If found with `skill: "ship"` and the phase is not yet merged, resume

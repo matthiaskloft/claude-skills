@@ -19,7 +19,7 @@ all checks pass.
 ## State Tracking
 
 This skill uses `.workflow-state.json` for cross-session resume.
-See `../shared-references/workflow-state.md` for the full protocol.
+See `../../shared-references/workflow-state.md` for the full protocol.
 
 **On startup**: Check for `.workflow-state.json` with
 `skill: "monitor-pr"` and a `monitor_cron_id`. If found, the previous
