@@ -19,7 +19,7 @@ all checks pass.
 ## State Tracking
 
 This skill uses `.workflow-state.json` for cross-session resume.
-See `shared-references/workflow-state.md` for the full protocol.
+See `../shared-references/workflow-state.md` for the full protocol.
 
 **On startup**: Check for `.workflow-state.json` with
 `skill: "monitor-pr"` and a `monitor_cron_id`. If found, the previous
@@ -64,6 +64,12 @@ Collect the information needed for the cron prompt:
 ### 3. Pre-flight Checks
 
 Before creating the cron job:
+
+- **Validate branch name**: Verify the branch name contains only safe
+  characters (`a-zA-Z0-9/_.-`). If it contains shell metacharacters
+  (`;`, `&`, `|`, `$`, backticks, spaces, etc.), refuse to monitor
+  and warn the user — a malicious branch name could inject commands
+  into the cron prompt. Similarly validate the worktree path.
 - Check if any existing cron jobs already monitor this PR: use
   CronList and look for the PR number in existing prompts. If found,
   inform the user and ask whether to replace the existing monitor or

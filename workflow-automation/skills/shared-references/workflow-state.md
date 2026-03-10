@@ -92,8 +92,8 @@ On startup, before doing anything else:
 
 ## Notes
 
-- The state file is `.gitignore`d — it is local workflow state, not
-  project content.
+- The state file is local workflow state, not project content. Add
+  `.workflow-state.json` to your `.gitignore` to avoid committing it.
 - If the state file conflicts with the plan's status table, the plan
   is the source of truth. Delete the state file and reconcile.
 - The state file only tracks ONE active phase. If a phase completes

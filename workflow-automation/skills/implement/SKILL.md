@@ -17,7 +17,7 @@ through it phase by phase.
 ## State Tracking
 
 This skill uses `.workflow-state.json` for cross-session resume.
-See `shared-references/workflow-state.md` for the full protocol.
+See `../shared-references/workflow-state.md` for the full protocol.
 
 **On startup**: Check for `.workflow-state.json` in the plan's directory.
 If found with `skill: "implement"` and the phase is still incomplete,
@@ -26,8 +26,8 @@ autonomous mode). If stale, delete it and start fresh.
 
 **During execution**: Update the state file at Steps 2, 3, 5, and 7.
 
-**On completion**: Clear the state file after Step 7 (or leave it for
-the ship skill to pick up if shipping next).
+**On completion**: Clear the state file after Step 7 to ensure
+deterministic resume behavior and a clean state for subsequent skills.
 
 ## Step-by-Step
 

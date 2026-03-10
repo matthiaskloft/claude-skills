@@ -38,7 +38,7 @@ autonomous operation. Run these harmless test commands:
 
 1. `git status` — tests Bash(git:*) permission
 2. `gh pr list --limit 0` — tests Bash(gh:*) permission
-3. Read a file in the project — tests Read permission
+3. Read the plan file or `CLAUDE.md` — tests Read permission
 4. `echo "preflight" > /dev/null` — tests general Bash permission
 
 If **any command triggers a user approval prompt**, stop and print:
