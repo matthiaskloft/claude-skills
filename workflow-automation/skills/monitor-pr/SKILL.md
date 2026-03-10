@@ -124,8 +124,9 @@ The user can stop monitoring manually by saying "stop monitoring" or
 
 The following is the prompt text to use with CronCreate. Replace
 `{pr_number}`, `{branch}`, `{worktree_path}`, `{merge_strategy}`,
-`{main_branch}`, and `{cron_job_id}` with actual values at creation
-time.
+`{main_branch}`, `{cron_job_id}`, and `{mode}` with actual values at
+creation time. `{mode}` is the workflow mode from the state file
+(`single`, `implement-ship`, or `implement-ship-all`).
 
 ```
 Check the status of PR #{pr_number} (branch: {branch}) and take action:
@@ -135,10 +136,12 @@ Check the status of PR #{pr_number} (branch: {branch}) and take action:
    - If state is MERGED or CLOSED: cancel this cron job (CronDelete job {cron_job_id}), say "PR #{pr_number} was closed/merged externally. Monitoring stopped." and stop.
 
 2. Check CI status:
-   gh pr checks {pr_number}
-   - If any checks are pending: say "PR #{pr_number}: checks still running." and stop.
-   - If all checks passed: skip to step 4.
-   - If any checks failed: continue to step 3.
+   First check if any checks exist: gh pr view {pr_number} --json statusCheckRollup --jq '.statusCheckRollup | length'
+   - If the count is 0 (no CI checks configured): skip to step 4 — treat as "all clear."
+   - If checks exist, run: gh pr checks {pr_number}
+     - If any checks are pending: say "PR #{pr_number}: checks still running." and stop.
+     - If all checks passed: skip to step 4.
+     - If any checks failed: continue to step 3.
 
 3. CI failure handling:
    a. Count prior fix attempts: git log --oneline origin/{main_branch}..origin/{branch} --grep="fix(ci):" | wc -l
@@ -157,8 +160,19 @@ Check the status of PR #{pr_number} (branch: {branch}) and take action:
 5. All clear (reviewDecision is APPROVED or empty, mergeable is MERGEABLE) — merge:
    gh pr merge {pr_number} {merge_strategy} --delete-branch
    - On success: cancel this cron job (CronDelete job {cron_job_id}). Say "PR #{pr_number} merged successfully."
-     Then clean up: if worktree path is "{worktree_path}" and not "none", run git worktree remove {worktree_path} and git branch -d {branch} if the local branch still exists. Run git pull origin {main_branch}.
+     Then clean up:
+     a. Check whether this branch is checked out in any other worktree by running: git worktree list --porcelain | grep -F "branch refs/heads/{branch}". If it is, do NOT delete the local branch — a successor phase may need it for rebase. Only delete the worktree (if path is not "none") with git worktree remove {worktree_path}.
+     b. If the branch is not checked out in any other worktree: remove the worktree (if not "none") with git worktree remove {worktree_path}, and delete the local branch with git branch -d {branch}.
+     c. Run git pull origin {main_branch}.
      Check if a plan-*.md document exists and update the current phase to MERGED with the PR URL. Check for remaining TODO phases and inform the user.
+     d. Update .workflow-state.json based on {mode}:
+        - If mode is "implement-ship-all":
+          Check if this is the final phase: grep -c "| TODO |" plan-*.md || echo "0"
+          If the count is 0 (no remaining phases): rm .workflow-state.json (pipeline complete).
+          Otherwise: clear only in_flight_pr (the file tracks the successor phase):
+          jq '.in_flight_pr = null' .workflow-state.json > .workflow-state.json.tmp && mv .workflow-state.json.tmp .workflow-state.json
+        - If mode is "single" or "implement-ship": delete the state file:
+          rm .workflow-state.json
    - On failure: report the error to the user. Do NOT cancel monitoring — the issue may resolve on the next cycle.
 ```
 
@@ -170,6 +184,10 @@ Check the status of PR #{pr_number} (branch: {branch}) and take action:
   this and asks the user.
 - **PR updated externally**: Monitor picks up new CI status naturally
   on next cycle. No special handling needed.
+- **No CI checks configured**: `gh pr checks` returns exit code 1 when
+  there are no checks, which looks like a failure. The cron prompt
+  handles this by checking the check count first and treating zero
+  checks as "all clear."
 - **Repo requires specific merge method**: If `gh pr merge` fails due
   to strategy mismatch, retry with the allowed method.
 - **Rate limiting**: If `gh` commands fail with rate limit errors,
@@ -177,6 +195,10 @@ Check the status of PR #{pr_number} (branch: {branch}) and take action:
 - **Protected branches**: If merge fails due to branch protection
   rules the monitor can't satisfy, inform the user and continue
   monitoring.
+- **Pipeline mode — successor branch depends on this branch**: The
+  cron checks for dependent branches before deleting the local branch
+  after merge. If a successor phase's branch was based on this one,
+  the local branch is preserved until the successor rebases onto main.
 
 ## Common Mistakes
 
