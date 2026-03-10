@@ -120,7 +120,7 @@ For each remaining `TODO` phase, in order:
    b. **Predecessor still open, with new commits** (monitor-pr pushed
       CI fixes or addressed review feedback): Rebase current phase onto
       the predecessor's latest branch. Then scan the new commits
-      (`git log <base>..origin/<predecessor-branch> --oneline`) — if
+      (`git log $(git merge-base HEAD origin/<predecessor-branch>)..origin/<predecessor-branch> --oneline`) — if
       they touch files or APIs used by the current phase, review the
       changes and adapt the current phase's code accordingly. Run tests
       after adapting.
@@ -138,10 +138,14 @@ For each remaining `TODO` phase, in order:
 4. **Ship** the phase:
    - If the predecessor's PR is NOT yet merged: wait for it first.
      Poll every 2 minutes with
-     `gh pr view <pr> --json state --jq '.state'`. Print status
-     updates every other check ("Waiting for PR #{N} to merge before
-     shipping phase {X}..."). Once merged, rebase the current phase
-     onto main (`git rebase <main-branch>`), run tests, then proceed.
+     `gh pr view <pr> --json state --jq '.state'`.
+     - If state is `CLOSED`: stop the pipeline and alert the user:
+       "Predecessor PR #{N} was closed without merging. Cannot
+       continue — phase {X} depends on it."
+     - If state is `MERGED`: rebase the current phase onto main
+       (`git rebase <main-branch>`), run tests, then proceed.
+     - Otherwise: print status updates every other check ("Waiting
+       for PR #{N} to merge before shipping phase {X}...").
    - Run the **ship** skill (Steps 1–4 only). The ship skill detects
      `mode: "implement-ship-all"` in the state file and operates in
      **pipeline mode**: it commits, pushes, creates the PR, starts

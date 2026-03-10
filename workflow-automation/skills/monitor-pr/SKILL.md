@@ -166,9 +166,11 @@ Check the status of PR #{pr_number} (branch: {branch}) and take action:
      c. Run git pull origin {main_branch}.
      Check if a plan-*.md document exists and update the current phase to MERGED with the PR URL. Check for remaining TODO phases and inform the user.
      d. Update .workflow-state.json based on {mode}:
-        - If mode is "implement-ship-all": clear only in_flight_pr (the file tracks the successor phase):
+        - If mode is "implement-ship-all":
+          Check if this is the final phase: grep -c "| TODO |" plan-*.md || echo "0"
+          If the count is 0 (no remaining phases): rm .workflow-state.json (pipeline complete).
+          Otherwise: clear only in_flight_pr (the file tracks the successor phase):
           jq '.in_flight_pr = null' .workflow-state.json > .workflow-state.json.tmp && mv .workflow-state.json.tmp .workflow-state.json
-          Exception: if no TODO phases remain in the plan, delete the state file (pipeline complete).
         - If mode is "single" or "implement-ship": delete the state file:
           rm .workflow-state.json
    - On failure: report the error to the user. Do NOT cancel monitoring — the issue may resolve on the next cycle.
