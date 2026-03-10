@@ -11,8 +11,8 @@ Domain-specific skills for [BayesFlow 2.x](https://github.com/bayesflow-org/baye
 | Skill | Description |
 |-------|-------------|
 | **bayesflow-simulator** | Data-generating processes with `@allow_batch_size`, RNG discipline, and prior/likelihood/meta functions |
-| **bayesflow-adapter** | Data preprocessing pipelines, three-slot schema, and standardization transforms |
 | **keras-ops** | Backend-agnostic tensor math using `keras.ops.*` for loss functions, layers, and forward passes |
+| **bayesflow-adapter** | Data preprocessing pipelines, three-slot schema, and standardization transforms |
 | **bayesflow-testing** | Test patterns with `conftest.py` setup, shape testing, and mocking |
 | **bayesflow-validation** | Simulation-based calibration (SBC), coverage metrics, and quality gates |
 | **bayesflow-memory** | GPU memory management, OOM recovery, and gradient checkpointing |
@@ -47,41 +47,24 @@ A Plan/Implement/Ship workflow for structured feature development. Breaks large 
 | **implement-ship-all** | Autonomously implement and ship all remaining phases from a plan |
 | **monitor-pr** | Background CI monitoring with auto-merge — checks status every 4 minutes and fixes failures |
 
-**Usage:** Start with `/plan` to design a feature, then `/implement` to build it phase by phase, and `/ship` to get it merged. For a fully autonomous flow, use `/implement-ship-all` (or say "autopilot") to run from plan to merged PRs without stopping.
+**Usage (after installation):** Start with `/plan` to design a feature, then `/implement` to build it phase by phase, and `/ship` to get it merged. For a fully autonomous flow, use `/implement-ship-all` (or say "autopilot") to run from plan to merged PRs without stopping.
 
 ## Installation
 
-### From the marketplace
-
-Add this repository as a Claude Code marketplace, then install one or more plugins:
+Install plugins using Claude Code's `/install-plugin` command. See the [Claude Code plugins documentation](https://docs.anthropic.com/en/docs/claude-code/plugins) for the latest syntax.
 
 ```shell
-/plugin marketplace add matthiaskloft/claude-skills
-/plugin install bayesflow-skills@matthiaskloft-claude-skills
-/plugin install code-sentinel@matthiaskloft-claude-skills
-/plugin install workflow-automation@matthiaskloft-claude-skills
-```
-
-### Direct plugin install
-
-Install individual plugins directly without adding the marketplace:
-
-```shell
-# BayesFlow skills
-/plugin install bayesflow-skills --source github:matthiaskloft/claude-skills/bayesflow
-
-# Code review
-/plugin install code-sentinel --source github:matthiaskloft/claude-skills/code-sentinel
-
-# Workflow automation
-/plugin install workflow-automation --source github:matthiaskloft/claude-skills/workflow-automation
+# Install from GitHub directly
+/install-plugin matthiaskloft/claude-skills/bayesflow
+/install-plugin matthiaskloft/claude-skills/code-sentinel
+/install-plugin matthiaskloft/claude-skills/workflow-automation
 ```
 
 ## How it works
 
 Once installed, skills activate automatically based on what you ask Claude to do. Each plugin adds its skills to Claude Code's context, and the matching skill triggers when your request fits its description.
 
-You can also invoke any skill explicitly using slash commands (e.g., `/plan`, `/ship`) or by referencing the fully qualified name (e.g., `bayesflow-skills:bayesflow-simulator`).
+You can also invoke any skill explicitly using slash commands (e.g., `/plan`, `/ship`) or by referencing the plugin-qualified name (e.g., `bayesflow-skills:bayesflow-simulator`, `workflow-automation:plan`).
 
 ## License
 

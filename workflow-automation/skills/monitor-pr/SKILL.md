@@ -135,10 +135,12 @@ Check the status of PR #{pr_number} (branch: {branch}) and take action:
    - If state is MERGED or CLOSED: cancel this cron job (CronDelete job {cron_job_id}), say "PR #{pr_number} was closed/merged externally. Monitoring stopped." and stop.
 
 2. Check CI status:
-   gh pr checks {pr_number}
-   - If any checks are pending: say "PR #{pr_number}: checks still running." and stop.
-   - If all checks passed: skip to step 4.
-   - If any checks failed: continue to step 3.
+   First check if any checks exist: gh pr view {pr_number} --json statusCheckRollup --jq '.statusCheckRollup | length'
+   - If the count is 0 (no CI checks configured): skip to step 4 — treat as "all clear."
+   - If checks exist, run: gh pr checks {pr_number}
+     - If any checks are pending: say "PR #{pr_number}: checks still running." and stop.
+     - If all checks passed: skip to step 4.
+     - If any checks failed: continue to step 3.
 
 3. CI failure handling:
    a. Count prior fix attempts: git log --oneline origin/{main_branch}..origin/{branch} --grep="fix(ci):" | wc -l
@@ -157,7 +159,10 @@ Check the status of PR #{pr_number} (branch: {branch}) and take action:
 5. All clear (reviewDecision is APPROVED or empty, mergeable is MERGEABLE) — merge:
    gh pr merge {pr_number} {merge_strategy} --delete-branch
    - On success: cancel this cron job (CronDelete job {cron_job_id}). Say "PR #{pr_number} merged successfully."
-     Then clean up: if worktree path is "{worktree_path}" and not "none", run git worktree remove {worktree_path} and git branch -d {branch} if the local branch still exists. Run git pull origin {main_branch}.
+     Then clean up:
+     a. Check if another worktree's branch is based on {branch} by running: git branch --contains {branch} | grep -v {branch}. If other branches depend on it, do NOT delete the local branch — a successor phase may need it for rebase. Only delete the worktree (if path is not "none"): git worktree remove {worktree_path}.
+     b. If no other branches depend on it: remove worktree (if not "none") with git worktree remove {worktree_path}, and delete local branch with git branch -d {branch}.
+     c. Run git pull origin {main_branch}.
      Check if a plan-*.md document exists and update the current phase to MERGED with the PR URL. Check for remaining TODO phases and inform the user.
    - On failure: report the error to the user. Do NOT cancel monitoring — the issue may resolve on the next cycle.
 ```
@@ -170,6 +175,10 @@ Check the status of PR #{pr_number} (branch: {branch}) and take action:
   this and asks the user.
 - **PR updated externally**: Monitor picks up new CI status naturally
   on next cycle. No special handling needed.
+- **No CI checks configured**: `gh pr checks` returns exit code 1 when
+  there are no checks, which looks like a failure. The cron prompt
+  handles this by checking the check count first and treating zero
+  checks as "all clear."
 - **Repo requires specific merge method**: If `gh pr merge` fails due
   to strategy mismatch, retry with the allowed method.
 - **Rate limiting**: If `gh` commands fail with rate limit errors,
@@ -177,6 +186,10 @@ Check the status of PR #{pr_number} (branch: {branch}) and take action:
 - **Protected branches**: If merge fails due to branch protection
   rules the monitor can't satisfy, inform the user and continue
   monitoring.
+- **Pipeline mode — successor branch depends on this branch**: The
+  cron checks for dependent branches before deleting the local branch
+  after merge. If a successor phase's branch was based on this one,
+  the local branch is preserved until the successor rebases onto main.
 
 ## Common Mistakes
 

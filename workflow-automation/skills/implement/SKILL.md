@@ -138,9 +138,16 @@ after shipping is complete.
 ## Branching
 
 - Detect the main branch name (e.g., `main`, `master`) from the repo
-- Pull the latest: `git pull origin <main-branch>`
+- Determine the base branch:
+  - **Default**: `<main-branch>` — pull the latest first
+    (`git pull origin <main-branch>`)
+  - **Pipeline mode** (when `implement-ship-all` provides a
+    `base_branch`): Use the predecessor phase's feature branch instead
+    of main. Fetch it first (`git fetch origin <base-branch>`). This
+    ensures the new phase has access to code from the predecessor that
+    hasn't merged yet.
 - Create a worktree for the phase:
-  `git worktree add ../feat-<feature>-<phase> <main-branch> -b feat/<feature>-<phase>`
+  `git worktree add ../feat-<feature>-<phase> <base-branch> -b feat/<feature>-<phase>`
 - Work in the worktree directory
 - The **ship** skill handles committing, PR, and cleanup
 - If abandoning a phase, ask the user before deleting the worktree and branch
