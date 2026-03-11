@@ -60,6 +60,9 @@ Collect the information needed for the cron prompt:
 - **Merge strategy**: Check CLAUDE.md or repo settings for convention.
   Default to `--squash`.
 - **Main branch**: Detect from repo (e.g., `main`, `master`).
+- **Plan file**: Resolve the plan document path (check CLAUDE.md for
+  dev docs convention, then look for `plan-*.md` excluding
+  `plan-*-done.md`). Record the path if found, otherwise record `none`.
 
 ### 3. Pre-flight Checks
 
@@ -108,6 +111,9 @@ When the cron prompt detects a successful merge, it performs cleanup:
   - Mark the phase as `MERGED` in the status table
   - Add the PR URL to the phase's Notes column
   - Check for remaining `TODO` phases and inform the user
+  - If no `TODO` phases remain, rename the plan file to denote
+    completion: `plan-<name>.md` → `plan-<name>-done.md`
+    (use `git mv` if tracked, otherwise plain `mv`; commit the rename)
 
 ### 6. Cancellation
 
@@ -124,9 +130,11 @@ The user can stop monitoring manually by saying "stop monitoring" or
 
 The following is the prompt text to use with CronCreate. Replace
 `{pr_number}`, `{branch}`, `{worktree_path}`, `{merge_strategy}`,
-`{main_branch}`, `{cron_job_id}`, and `{mode}` with actual values at
-creation time. `{mode}` is the workflow mode from the state file
-(`single`, `implement-ship`, or `implement-ship-all`).
+`{main_branch}`, `{cron_job_id}`, `{mode}`, and `{plan_file}` with
+actual values at creation time. `{mode}` is the workflow mode from the
+state file (`single`, `implement-ship`, or `implement-ship-all`).
+`{plan_file}` is the resolved path to the plan document (e.g.,
+`dev/plans/plan-my-feature.md`), or `none` if no plan exists.
 
 ```
 Check the status of PR #{pr_number} (branch: {branch}) and take action:
@@ -164,12 +172,11 @@ Check the status of PR #{pr_number} (branch: {branch}) and take action:
      a. Check whether this branch is checked out in any other worktree by running: git worktree list --porcelain | grep -F "branch refs/heads/{branch}". If it is, do NOT delete the local branch — a successor phase may need it for rebase. Only delete the worktree (if path is not "none") with git worktree remove {worktree_path}.
      b. If the branch is not checked out in any other worktree: remove the worktree (if not "none") with git worktree remove {worktree_path}, and delete the local branch with git branch -d {branch}.
      c. Run git pull origin {main_branch}.
-     Check if a plan-*.md document exists and update the current phase to MERGED with the PR URL. Check for remaining TODO phases and inform the user.
+     If {plan_file} is not "none": update the current phase to MERGED with the PR URL in {plan_file}, then check remaining TODO phases: TODO_COUNT=$(grep -c "| TODO |" "{plan_file}" || echo "0"). If TODO_COUNT is 0, rename the plan: git mv "{plan_file}" "{plan_file%.md}-done.md" 2>/dev/null || mv "{plan_file}" "{plan_file%.md}-done.md" && git commit -m "mark plan complete". Inform the user of remaining phases or completion. If {plan_file} is "none", skip plan updates.
      d. Update .workflow-state.json based on {mode}:
         - If mode is "implement-ship-all":
-          Check if this is the final phase: grep -c "| TODO |" plan-*.md || echo "0"
-          If the count is 0 (no remaining phases): rm .workflow-state.json (pipeline complete).
-          Otherwise: clear only in_flight_pr (the file tracks the successor phase):
+          If {plan_file} is not "none" and TODO_COUNT is 0 (all phases done): rm .workflow-state.json (pipeline complete).
+          Otherwise (phases remain, or no plan file): clear in_flight_pr (the predecessor merged, but successor tracking continues):
           jq '.in_flight_pr = null' .workflow-state.json > .workflow-state.json.tmp && mv .workflow-state.json.tmp .workflow-state.json
         - If mode is "single" or "implement-ship": delete the state file:
           rm .workflow-state.json
