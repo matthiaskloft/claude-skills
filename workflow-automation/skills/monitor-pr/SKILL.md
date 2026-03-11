@@ -103,7 +103,7 @@ review triage before merging, then cleans up after a successful merge:
 
 - **Bot review triage** (before merge): Check for actionable inline
   review comments from automated reviewers (CodeRabbit, Copilot). If
-  found, fix and push; next cycle will re-check. Caps at 2 fix attempts.
+  found, fix and push; next cycle will re-check. Caps at 6 fix attempts.
 
 - **Worktree cleanup** (if a worktree path was recorded):
   1. Ensure the working directory is the main repo root (use
@@ -130,7 +130,7 @@ Monitoring stops automatically when:
 - The PR is merged (success)
 - The PR is closed externally
 - CI fix attempts exceed the threshold (>2 `fix(ci):` commits)
-- Review fix attempts exceed the threshold (>2 `fix(review):` commits)
+- Review fix attempts exceed the threshold (>6 `fix(review):` commits)
 - The cron job auto-expires (3-day limit)
 
 The user can stop monitoring manually by saying "stop monitoring" or
@@ -179,7 +179,7 @@ Check the status of PR #{pr_number} (branch: {branch}) and take action:
 
    a. Bot review triage gate (run before every merge attempt):
       First, count prior fix(review) attempts: git log --oneline --grep="fix(review):" origin/{main_branch}..origin/{branch} | wc -l
-      If count > 2: cancel this cron job (CronDelete job {cron_job_id}). Tell the user: "PR #{pr_number} has had {count} review fix attempts. Stopping monitor — please address review comments manually." Stop.
+      If count > 6: cancel this cron job (CronDelete job {cron_job_id}). Tell the user: "PR #{pr_number} has had {count} review fix attempts. Stopping monitor — please address review comments manually." Stop.
 
       Check for the most recent fix(review) commit timestamp (in UTC):
       git log --format="%aI" --grep="fix(review):" origin/{main_branch}..origin/{branch} | head -1
