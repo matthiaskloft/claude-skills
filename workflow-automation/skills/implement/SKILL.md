@@ -74,6 +74,14 @@ Follow the plan's steps for this phase:
 - Follow the project's conventions (check CLAUDE.md). If no CLAUDE.md
   exists, infer conventions from existing code and dev docs.
 
+**Match existing patterns**: Before writing new code in a file, read the
+entire file to identify architectural patterns already in use — wrapper
+functions, factory conventions, registration patterns, naming schemes,
+and API surface conventions. Replicate these patterns in new code. For
+example, if existing functions follow a "public no-arg wrapper + private
+parameterized implementation" pattern for a registry, new functions must
+follow the same structure.
+
 **Stay on scope**: Only implement what the plan specifies for this phase.
 Before modifying a file, cross-check it against the plan's file lists for
 this phase. If the file is not listed, stop and ask the user: add it to
@@ -102,7 +110,10 @@ Run a comprehensive code review cycle until the code is clean:
    (2) redundancies — does new code duplicate existing utilities,
    (3) correctness — edge cases, return value contracts, error handling,
    (4) security — injection, path traversal, credential exposure,
-   (5) coherence — do changes break callers or violate conventions.
+   (5) coherence — do changes break callers or violate conventions,
+   (6) pattern consistency — does new code replicate the architectural
+   patterns (wrappers, factories, registration, naming) established in
+   the same file or module, rather than introducing a different style.
    For each finding, state severity (blocker/warning/suggestion) and a
    concrete fix. End with: Review complete: X findings."
    Pass the plan document, changed files, and relevant surrounding code.
@@ -180,3 +191,6 @@ after shipping is complete.
 - Not updating the plan document after completing a phase
 - Starting the next phase without confirming the current one works
 - Forgetting to check project conventions in CLAUDE.md
+- Introducing a new pattern (e.g., direct implementation) when the file's
+  existing functions use a wrapper/factory convention — replicate the
+  existing structure instead

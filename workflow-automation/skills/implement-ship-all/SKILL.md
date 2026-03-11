@@ -48,7 +48,7 @@ Before starting, verify the session has the permissions needed for
 autonomous operation. Run these harmless test commands:
 
 1. `git status` — tests Bash(git:*) permission
-2. `gh pr list --limit 0` — tests Bash(gh:*) permission
+2. `gh pr list --limit 1 --state closed` — tests Bash(gh:*) permission
 3. Read the plan file or `CLAUDE.md` — tests Read permission
 4. `echo "preflight" > /dev/null` — tests general Bash permission
 
