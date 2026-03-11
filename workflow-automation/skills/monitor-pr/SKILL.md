@@ -110,7 +110,7 @@ When the cron prompt detects a successful merge, it performs cleanup:
   - Check for remaining `TODO` phases and inform the user
   - If no `TODO` phases remain, rename the plan file to denote
     completion: `plan-<name>.md` → `plan-<name>-done.md`
-    (use `git mv` if tracked, then commit the rename)
+    (use `git mv` if tracked, otherwise plain `mv`; commit the rename)
 
 ### 6. Cancellation
 
@@ -167,10 +167,10 @@ Check the status of PR #{pr_number} (branch: {branch}) and take action:
      a. Check whether this branch is checked out in any other worktree by running: git worktree list --porcelain | grep -F "branch refs/heads/{branch}". If it is, do NOT delete the local branch — a successor phase may need it for rebase. Only delete the worktree (if path is not "none") with git worktree remove {worktree_path}.
      b. If the branch is not checked out in any other worktree: remove the worktree (if not "none") with git worktree remove {worktree_path}, and delete the local branch with git branch -d {branch}.
      c. Run git pull origin {main_branch}.
-     Find the plan file: PLAN_FILE=$(ls plan-*.md 2>/dev/null | grep -v '\-done\.md$' | head -1). If found, update the current phase to MERGED with the PR URL. Check for remaining TODO phases: TODO_COUNT=$(grep -c "| TODO |" "$PLAN_FILE" || echo "0"). If TODO_COUNT is 0, rename the plan: git mv "$PLAN_FILE" "${PLAN_FILE%.md}-done.md" && git commit -m "mark plan complete" . Inform the user of remaining phases or completion.
+     Find the plan file: PLAN_FILE=$(ls plan-*.md 2>/dev/null | grep -v '\-done\.md$' | head -1). If PLAN_FILE is non-empty: update the current phase to MERGED with the PR URL, then check remaining TODO phases: TODO_COUNT=$(grep -c "| TODO |" "$PLAN_FILE" || echo "0"). If TODO_COUNT is 0, rename the plan: git mv "$PLAN_FILE" "${PLAN_FILE%.md}-done.md" 2>/dev/null || mv "$PLAN_FILE" "${PLAN_FILE%.md}-done.md" && git commit -m "mark plan complete". Inform the user of remaining phases or completion. If PLAN_FILE is empty (no plan found), skip plan updates and set TODO_COUNT=-1 to preserve state.
      d. Update .workflow-state.json based on {mode}:
         - If mode is "implement-ship-all":
-          If TODO_COUNT (from step c) is 0: rm .workflow-state.json (pipeline complete).
+          If TODO_COUNT is 0 (plan found, all phases done): rm .workflow-state.json (pipeline complete). If TODO_COUNT is -1 (no plan found): do not delete state file.
           Otherwise: clear only in_flight_pr (the file tracks the successor phase):
           jq '.in_flight_pr = null' .workflow-state.json > .workflow-state.json.tmp && mv .workflow-state.json.tmp .workflow-state.json
         - If mode is "single" or "implement-ship": delete the state file:

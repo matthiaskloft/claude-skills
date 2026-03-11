@@ -182,7 +182,8 @@ When all phases are `MERGED`:
 - Print the final progress dashboard (all phases showing `MERGED`)
 - Mark `Ship` as `MERGED` in the plan's status table
 - Rename the plan file to denote completion: `plan-<name>.md` →
-  `plan-<name>-done.md` (use `git mv` if the file is tracked)
+  `plan-<name>-done.md` (use `git mv` if the file is tracked,
+  otherwise plain `mv`)
 - Congratulate the user — the feature is complete
 - Remind them of any deferred suggestions or follow-up items from
   reviews across all phases
