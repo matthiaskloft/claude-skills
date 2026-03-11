@@ -96,16 +96,25 @@ Inform the user:
 >
 > Note: monitoring auto-expires after 3 days.
 
-### 5. Post-Merge Cleanup
+### 5. Pre-Merge Review and Post-Merge Cleanup
 
-When the cron prompt detects a successful merge, it performs cleanup:
+When the cron prompt reaches the "all clear" path, it performs a bot
+review triage before merging, then cleans up after a successful merge:
+
+- **Bot review triage** (before merge): Check for actionable inline
+  review comments from automated reviewers (CodeRabbit, Copilot). If
+  found, fix and push; next cycle will re-check. Caps at 2 fix attempts.
 
 - **Worktree cleanup** (if a worktree path was recorded):
-  1. Ensure the working directory is NOT in the worktree
-  2. `git worktree remove <worktree-path>`
+  1. Ensure the working directory is the main repo root (use
+     `git worktree list` to find it, not `git rev-parse --show-toplevel`)
+  2. `git worktree remove --force <worktree-path>`
   3. If the local branch still exists: `git branch -d <branch-name>`
+     (use `-D` as fallback — safe because the PR was just merged)
 
-- **Pull latest main**: `git pull origin <main-branch>`
+- **Pull latest main**: `git pull origin <main-branch>`. If it fails
+  due to uncommitted local changes, report the error — do not stash
+  automatically.
 
 - **Update plan** (if a plan document exists):
   - Mark the phase as `MERGED` in the status table
@@ -120,7 +129,8 @@ When the cron prompt detects a successful merge, it performs cleanup:
 Monitoring stops automatically when:
 - The PR is merged (success)
 - The PR is closed externally
-- Fix attempts exceed the threshold (>2 `fix(ci):` commits)
+- CI fix attempts exceed the threshold (>2 `fix(ci):` commits)
+- Review fix attempts exceed the threshold (>2 `fix(review):` commits)
 - The cron job auto-expires (3-day limit)
 
 The user can stop monitoring manually by saying "stop monitoring" or
@@ -165,15 +175,36 @@ Check the status of PR #{pr_number} (branch: {branch}) and take action:
    e. If reviewDecision is any other unexpected value: tell the user
       about the review state and wait for next cycle.
 
-5. All clear (reviewDecision is APPROVED or empty, mergeable is MERGEABLE) — merge:
-   gh pr merge {pr_number} {merge_strategy} --delete-branch
+5. All clear (reviewDecision is APPROVED or empty, mergeable is MERGEABLE):
+
+   a. Bot review triage gate (run before every merge attempt):
+      First, count prior fix(review) attempts: git log --oneline --grep="fix(review):" origin/{main_branch}..origin/{branch} | wc -l
+      If count > 2: cancel this cron job (CronDelete job {cron_job_id}). Tell the user: "PR #{pr_number} has had {count} review fix attempts. Stopping monitor — please address review comments manually." Stop.
+
+      Check for the most recent fix(review) commit timestamp (in UTC):
+      git log --format="%aI" --grep="fix(review):" origin/{main_branch}..origin/{branch} | head -1
+      If a fix(review) commit exists, convert it to UTC and record as LAST_FIX_TIME. Note: git returns local timezone (%aI) while GitHub API returns UTC — normalize both to UTC before comparing.
+
+      Fetch inline review comments (these capture CodeRabbit/Copilot line-level findings):
+      gh api repos/:owner/:repo/pulls/{pr_number}/comments --paginate --jq '[.[] | {user: .user.login, body: .body, path: .path, created_at: .created_at}]'
+
+      If LAST_FIX_TIME is set, discard any comments with created_at <= LAST_FIX_TIME — those were already addressed by the fix commit.
+
+      Triage remaining comments: classify as actionable (bug report, crash scenario, missing validation, wrong logic, type error) or non-actionable (style suggestion, praise, summary walkthrough, question already answered by the code).
+      - If ANY actionable comments exist: address at most 5 per cycle, prioritizing by severity (crashes > wrong logic > missing validation > type errors). Commit with message "fix(review): <description>", push to {branch}. Say "PR #{pr_number}: addressed review comments, waiting for re-review." Stop — next cycle will re-check after bots re-review.
+      - If no actionable comments remain (all non-actionable or empty): proceed to merge.
+
+   b. Merge:
+      gh pr merge {pr_number} {merge_strategy} --delete-branch
    - On success: cancel this cron job (CronDelete job {cron_job_id}). Say "PR #{pr_number} merged successfully."
      Then clean up:
-     a. Check whether this branch is checked out in any other worktree by running: git worktree list --porcelain | grep -F "branch refs/heads/{branch}". If it is, do NOT delete the local branch — a successor phase may need it for rebase. Only delete the worktree (if path is not "none") with git worktree remove {worktree_path}.
-     b. If the branch is not checked out in any other worktree: remove the worktree (if not "none") with git worktree remove {worktree_path}, and delete the local branch with git branch -d {branch}.
-     c. Run git pull origin {main_branch}.
+     c. Ensure CWD is the main repo root (not inside a worktree): get the main worktree path from git worktree list (the first entry is always the main worktree) and cd there. Do NOT use git rev-parse --show-toplevel — it returns the current worktree's root, not the main repo's. Then check whether this branch is checked out in any other worktree: git worktree list --porcelain | grep -F "branch refs/heads/{branch}".
+        - If YES (branch is in another worktree): do NOT delete the local branch — a successor phase may need it for rebase. Only remove the worktree (if path is not "none") with git worktree remove --force {worktree_path}.
+        - If NO (branch is not in another worktree): remove the worktree (if not "none") with git worktree remove --force {worktree_path}, then delete the local branch with git branch -d {branch}. If -d fails (branch not fully merged into current HEAD), use git branch -D {branch} — this is safe because the PR was just merged on the remote.
+     (Run either the YES or NO branch above, not both.)
+     e. Run git pull origin {main_branch}. If it fails due to uncommitted local changes, report the error — do not stash automatically.
      If {plan_file} is not "none": update the current phase to MERGED with the PR URL in {plan_file}, then check remaining TODO phases: TODO_COUNT=$(grep -c "| TODO |" "{plan_file}" || echo "0"). If TODO_COUNT is 0, rename the plan: git mv "{plan_file}" "{plan_file%.md}-done.md" 2>/dev/null || mv "{plan_file}" "{plan_file%.md}-done.md" && git commit -m "mark plan complete". Inform the user of remaining phases or completion. If {plan_file} is "none", skip plan updates.
-     d. Update .workflow-state.json based on {mode}:
+     f. Update .workflow-state.json based on {mode}:
         - If mode is "implement-ship-all":
           If {plan_file} is not "none" and TODO_COUNT is 0 (all phases done): rm .workflow-state.json (pipeline complete).
           Otherwise (phases remain, or no plan file): clear in_flight_pr (the predecessor merged, but successor tracking continues):
@@ -206,6 +237,11 @@ Check the status of PR #{pr_number} (branch: {branch}) and take action:
   cron checks for dependent branches before deleting the local branch
   after merge. If a successor phase's branch was based on this one,
   the local branch is preserved until the successor rebases onto main.
+- **Bot reviewers post comments without setting reviewDecision**: The
+  cron prompt fetches and triages inline review comments (step 5a)
+  before every merge attempt. This catches CodeRabbit, Copilot, and
+  similar automated reviewers. Comments older than the most recent
+  fix(review): commit are ignored to prevent infinite fix loops.
 
 ## Common Mistakes
 
