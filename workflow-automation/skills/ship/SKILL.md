@@ -160,7 +160,7 @@ Verify this was done. If not (e.g., monitor-pr was interrupted):
   - Mark `Ship` as `MERGED` in the status table
   - Rename the plan file to denote completion: `plan-<name>.md` →
     `plan-<name>-done.md` (use `git mv` if the file is tracked,
-    otherwise plain `mv`)
+    otherwise plain `mv`). Skip if already named `*-done.md`.
   - Congratulate the user — the feature is complete
 - If there are deferred suggestions or follow-up items from reviews,
   remind the user about them
