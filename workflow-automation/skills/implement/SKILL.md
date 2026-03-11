@@ -124,7 +124,7 @@ Run a comprehensive code review cycle until the code is clean:
    remain. Suggestions may be deferred — document them in the plan's Notes
    section and continue.
 
-   Cap at 3 total review iterations. If the 3rd review still returns
+   Cap at 4 total review iterations. If the 4th review still returns
    blockers or warnings that require fixes, stop and inform the user
    rather than starting another fix/review cycle.
 

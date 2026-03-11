@@ -99,10 +99,10 @@ Review the plan in a loop until no new issues are found:
    (e.g., "Reviewed in 2 iterations") so the user can gauge how contested
    the plan was.
 
-**Guard rail**: Cap the loop at 3 total review iterations. If the 3rd
+**Guard rail**: Cap the loop at 4 total review iterations. If the 4th
 review still returns blockers that would require more revisions, stop
 there, present the plan with those unresolved issues clearly flagged,
-and ask the user for guidance instead of starting a 4th cycle.
+and ask the user for guidance instead of starting a 5th cycle.
 
 **Fallback**: If the Agent tool is unavailable, note in the plan that it
 was not independently reviewed and present it directly to the user.
@@ -151,7 +151,7 @@ the feature from the plan, or implement it directly in the current session.
 - **User rejects the plan**: Ask what they'd change — adjust scope, rethink
   design decisions, or offer to skip planning and implement directly.
 - **Reviewer finds blockers**: The iterative review loop (Step 3) handles
-  this automatically. If blockers persist after 3 iterations, present the
+  this automatically. If blockers persist after 4 iterations, present the
   plan with unresolved issues flagged and ask for user guidance.
 - **Ambiguous request**: If the user says "just plan it" without answering
   clarifying questions, make reasonable assumptions and document them

@@ -214,7 +214,7 @@ Followed by a table:
   unexpectedly (e.g., CronCreate quirks, `gh` CLI edge cases)
 - **plan-deviation** — The plan's steps didn't match reality (files
   moved, APIs changed, missing dependencies)
-- **review-churn** — The deep review loop required 3+ iterations,
+- **review-churn** — The deep review loop required 4+ iterations,
   suggesting the plan or implementation guidance was underspecified
 - **ci-friction** — CI failures that were hard to diagnose or required
   workarounds
