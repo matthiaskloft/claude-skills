@@ -42,6 +42,9 @@ Before writing anything, gather context:
   subfolder there, creating it if needed.
 - If no convention is found, place the plan in the project root.
 - Filename: `plan-<kebab-case-name>.md`
+  - When a plan is fully completed (all phases merged), it gets renamed
+    to `plan-<kebab-case-name>-done.md` — see the ship and
+    implement-ship-all skills for when this happens.
 - Use the template in `references/plan-template.md`
 - For a filled-in example, see `references/plan-example.md`
 - Fill in every section — leave nothing as placeholder text

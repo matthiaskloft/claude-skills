@@ -158,6 +158,8 @@ Verify this was done. If not (e.g., monitor-pr was interrupted):
   - Suggest starting it with the **implement** skill
 - If all phases are done:
   - Mark `Ship` as `MERGED` in the status table
+  - Rename the plan file to denote completion: `plan-<name>.md` →
+    `plan-<name>-done.md` (use `git mv` if the file is tracked)
   - Congratulate the user — the feature is complete
 - If there are deferred suggestions or follow-up items from reviews,
   remind the user about them

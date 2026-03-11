@@ -37,6 +37,9 @@ deterministic resume behavior and a clean state for subsequent skills.
   1. Check CLAUDE.md for a dev docs directory convention, look in its
      `plans/` subfolder
   2. Look for `plan-*.md` files in the project root
+- Exclude files matching `plan-*-done.md` — these are completed plans.
+  If only completed plans exist, inform the user that all plans are
+  already done.
 - If the user specifies a plan name, find the matching file.
 - If multiple plans exist, show the user a list and ask which to use.
 - Read the plan and identify which phases are `TODO` or `IN_PROGRESS`.
