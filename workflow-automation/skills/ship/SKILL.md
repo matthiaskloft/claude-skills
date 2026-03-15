@@ -19,7 +19,7 @@ opening a pull request, monitoring CI, and merging.
 This skill uses `.workflow-state.json` for cross-session resume.
 See `../../shared-references/workflow-state.md` for the full protocol.
 
-**On startup**: Check for `.workflow-state.json` in the plan's directory.
+**On startup**: Check for `.workflow-state.json` in the project root.
 If found with `skill: "ship"` and the phase is not yet merged, resume
 from the recorded step. Key resume scenarios:
 - `step: 2` — changes were staged/committed but not pushed. Push and
@@ -27,6 +27,13 @@ from the recorded step. Key resume scenarios:
 - `step: 3` with `pr_number` set — PR was created. Skip to Step 4.
 - `step: 4` with `monitor_cron_id` set — monitoring was active. Check
   if the cron job still exists (CronList); if not, re-invoke monitor-pr.
+
+**Autonomous mode**: If the state file contains
+`mode: "implement-ship-all"`, skip all confirmation prompts:
+- Resume automatically from the recorded step without asking
+  "Resume or start over?"
+- Step 1: If the phase is `IMPLEMENTED`, proceed directly without
+  asking whether to finalize
 
 **During execution**: Update the state file at Steps 2, 3, and 4.
 

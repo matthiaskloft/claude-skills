@@ -19,10 +19,16 @@ through it phase by phase.
 This skill uses `.workflow-state.json` for cross-session resume.
 See `../../shared-references/workflow-state.md` for the full protocol.
 
-**On startup**: Check for `.workflow-state.json` in the plan's directory.
+**On startup**: Check for `.workflow-state.json` in the project root.
 If found with `skill: "implement"` and the phase is still incomplete,
-offer to resume from the recorded step (or resume automatically in
-autonomous mode). If stale, delete it and start fresh.
+offer to resume from the recorded step. If stale, delete it and start
+fresh.
+
+**Autonomous mode**: If the state file contains
+`mode: "implement-ship-all"`, skip all confirmation prompts:
+- Resume automatically from the recorded step without asking
+  "Resume or start over?"
+- Step 2: Do not ask "Starting {phase}. Proceed?" — start immediately
 
 **During execution**: Update the state file at Steps 2, 3, 5, and 7.
 

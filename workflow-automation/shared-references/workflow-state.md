@@ -47,7 +47,7 @@ Add it to `.gitignore` to avoid committing it.
 ## Read Protocol (all skills)
 
 On startup, before doing anything else:
-1. Look for `.workflow-state.json` in the plan's directory (or project root)
+1. Look for `.workflow-state.json` in the project root
 2. If found, read it and check if the state is relevant:
    - Does the `plan` field match the current plan?
    - Is the `phase` still incomplete (not `MERGED` in the plan)?
