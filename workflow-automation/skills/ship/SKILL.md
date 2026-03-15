@@ -19,7 +19,7 @@ opening a pull request, monitoring CI, and merging.
 This skill uses `.workflow-state.json` for cross-session resume.
 See `../../shared-references/workflow-state.md` for the full protocol.
 
-**On startup**: Check for `.workflow-state.json` in the plan's directory.
+**On startup**: Check for `.workflow-state.json` in the project root.
 If found with `skill: "ship"` and the phase is not yet merged, resume
 from the recorded step. Key resume scenarios:
 - `step: 2` — changes were staged/committed but not pushed. Push and
@@ -27,6 +27,13 @@ from the recorded step. Key resume scenarios:
 - `step: 3` with `pr_number` set — PR was created. Skip to Step 4.
 - `step: 4` with `monitor_cron_id` set — monitoring was active. Check
   if the cron job still exists (CronList); if not, re-invoke monitor-pr.
+
+**Autonomous mode**: If the state file contains
+`mode: "implement-ship-all"`, skip all confirmation prompts:
+- Resume automatically from the recorded step without asking
+  "Resume or start over?"
+- Step 1: If the phase is `IMPLEMENTED`, proceed directly without
+  asking whether to finalize
 
 **During execution**: Update the state file at Steps 2, 3, and 4.
 
@@ -102,27 +109,16 @@ Delegate CI monitoring and auto-merge to the **monitor-pr** skill:
 - It also handles post-merge cleanup (worktree removal, branch
   deletion, pulling latest main).
 
-**Pipeline mode** (when `mode` is `"implement-ship-all"` in the state
-file): After monitor-pr creates the cron job and returns, **stop here**.
-Do NOT wait for the merge. Do NOT proceed to Steps 5–7. The PR number
-and monitor cron ID are already recorded in the state file for the
-calling skill to read. Return control to `implement-ship-all`, which
-will move on to implementing the next phase while this PR is monitored
-in the background. The monitor-pr cron handles post-merge cleanup and
-plan updates autonomously.
-
-**Normal mode** (`single` or `implement-ship`): After monitor-pr
-creates the cron job, wait for the merge to complete. Poll every 2
-minutes with `gh pr view <pr-number> --json state --jq '.state'` until
-the state is `MERGED`. Then continue to Step 5. (The user can interrupt
-this polling at any time — monitor-pr continues in the background.)
+After monitor-pr creates the cron job, wait for the merge to complete.
+Poll every 2 minutes with
+`gh pr view <pr-number> --json state --jq '.state'` until the state is
+`MERGED`. Then continue to Step 5. (The user can interrupt this polling
+at any time — monitor-pr continues in the background.)
 
 If monitor-pr reports a blocker needing human input, help the user
 resolve it, then re-invoke `/monitor-pr` to resume.
 
 ### 5. Post-Merge Verification
-
-> **Skipped in pipeline mode** — monitor-pr handles cleanup autonomously.
 
 The **monitor-pr** skill handles cleanup. Verify it completed:
 
@@ -137,8 +133,6 @@ The **monitor-pr** skill handles cleanup. Verify it completed:
 
 ### 6. Update the Plan
 
-> **Skipped in pipeline mode** — monitor-pr updates the plan at merge time.
-
 The **monitor-pr** skill updates the plan to `MERGED` at merge time.
 Verify this was done. If not (e.g., monitor-pr was interrupted):
 - Mark the phase as `MERGED` in the status table
@@ -149,8 +143,6 @@ Verify this was done. If not (e.g., monitor-pr was interrupted):
   shipped work anywhere.
 
 ### 7. Propose Next Steps
-
-> **Skipped in pipeline mode** — `implement-ship-all` manages the loop.
 
 - Check the plan for remaining phases marked `TODO`
 - If there are more phases:

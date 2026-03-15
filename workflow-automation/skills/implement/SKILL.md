@@ -19,10 +19,16 @@ through it phase by phase.
 This skill uses `.workflow-state.json` for cross-session resume.
 See `../../shared-references/workflow-state.md` for the full protocol.
 
-**On startup**: Check for `.workflow-state.json` in the plan's directory.
+**On startup**: Check for `.workflow-state.json` in the project root.
 If found with `skill: "implement"` and the phase is still incomplete,
-offer to resume from the recorded step (or resume automatically in
-autonomous mode). If stale, delete it and start fresh.
+offer to resume from the recorded step. If stale, delete it and start
+fresh.
+
+**Autonomous mode**: If the state file contains
+`mode: "implement-ship-all"`, skip all confirmation prompts:
+- Resume automatically from the recorded step without asking
+  "Resume or start over?"
+- Step 2: Do not ask "Starting {phase}. Proceed?" — start immediately
 
 **During execution**: Update the state file at Steps 2, 3, 5, and 7.
 
@@ -124,7 +130,7 @@ Run a comprehensive code review cycle until the code is clean:
    remain. Suggestions may be deferred — document them in the plan's Notes
    section and continue.
 
-   Cap at 3 total review iterations. If the 3rd review still returns
+   Cap at 4 total review iterations. If the 4th review still returns
    blockers or warnings that require fixes, stop and inform the user
    rather than starting another fix/review cycle.
 
@@ -157,17 +163,9 @@ after shipping is complete.
 ## Branching
 
 - Detect the main branch name (e.g., `main`, `master`) from the repo
-- Determine the base branch:
-  - **Default**: `<main-branch>` — pull the latest first
-    (`git pull origin <main-branch>`)
-  - **Pipeline mode** (when `implement-ship-all` provides a
-    `base_branch`): Use the predecessor phase's feature branch instead
-    of main. This ensures the new phase has access to code from the
-    predecessor that hasn't merged yet.
-    1. Fetch the base branch: `git fetch origin <base-branch>`
-    2. Create the worktree (see below)
+- Pull the latest main: `git pull origin <main-branch>`
 - Create a worktree for the phase:
-  `git worktree add -b feat/<feature>-<phase> ../feat-<feature>-<phase> origin/<base-branch>`
+  `git worktree add -b feat/<feature>-<phase> ../feat-<feature>-<phase> origin/<main-branch>`
 - Work in the worktree directory
 - The **ship** skill handles committing, PR, and cleanup
 - If abandoning a phase, ask the user before deleting the worktree and branch
@@ -183,6 +181,10 @@ after shipping is complete.
   scope. If it's a pre-existing problem, document it in Notes and continue.
 - **Blocked by a dependency**: Note the blocker in the plan, mark the
   phase as `BLOCKED`, and ask the user how to proceed.
+- **WSL git index lock**: On WSL2, the first `git add` or `git mv` in
+  a worktree may fail with "Read-only file system" on the index.lock.
+  Retry the same command — it typically succeeds on the second attempt.
+  Do not treat this as a fatal error.
 
 ## Common Mistakes
 

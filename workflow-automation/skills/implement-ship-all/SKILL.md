@@ -24,57 +24,82 @@ is set to `"implement-ship-all"`.
 
 **On startup**: Check for `.workflow-state.json`. If found with
 `mode: "implement-ship-all"`, a previous session was running the
-pipeline loop. Read the plan's status table to determine phase statuses.
+loop. Read the plan's status table to determine phase statuses.
 Resume based on the state:
-- If `in_flight_pr` exists, check the PR status. If merged, clear
-  `in_flight_pr` and continue. If open, verify monitor-pr is active
-  (re-create the cron if the session died).
-- **Crash window recovery**: If `in_flight_pr` is null but `skill` is
-  `"monitor-pr"` or `"ship"` with a `pr_number` set, the session
-  crashed between starting the monitor and recording `in_flight_pr`.
-  Treat the current state's PR fields as the in-flight predecessor:
-  move `phase`, `branch`, `pr_number`, and `monitor_cron_id` into
-  `in_flight_pr`, then look at the plan to find the next `TODO` phase.
-- Find the next `TODO` or `IN_PROGRESS` phase and resume the pipeline
+- If `pr_number` is set, check the PR status. If merged, clear it
+  and continue. If open, verify monitor-pr is active (re-create the
+  cron if the session died).
+- Find the next `TODO` or `IN_PROGRESS` phase and resume the loop
   from there.
 - Print "Resuming autonomous run: {N} phases remaining" and continue
   — do not re-confirm.
 
 ## Step-by-Step
 
-### 0. Permission Pre-flight
+### 0. Permission and Sandbox Pre-flight
 
-Before starting, verify the session has the permissions needed for
-autonomous operation. Run these harmless test commands:
+Before starting, verify the session has the permissions and sandbox
+configuration needed for autonomous operation.
+
+**a. Check sandbox prerequisites:**
+
+1. Verify `.claude/commands/` exists. If missing, create it:
+   `mkdir -p .claude/commands`
+   (The sandbox requires this directory to exist — without it, all
+   git and gh commands are blocked.)
+2. Check `.claude/settings.local.json` exists and contains both
+   `permissions.allow` and `sandbox` configuration. If the file is
+   missing or incomplete, inform the user (see message below).
+
+**b. Run permission test commands:**
 
 1. `git status` — tests Bash(git:*) permission
 2. `gh pr list --limit 1 --state closed` — tests Bash(gh:*) permission
 3. Read the plan file or `CLAUDE.md` — tests Read permission
 4. `echo "preflight" > /dev/null` — tests general Bash permission
 
-If **any command triggers a user approval prompt**, stop and print:
+If **any command triggers a user approval prompt** or **the sandbox
+blocks a command**, stop and print:
 
-> **Autonomous mode requires pre-approved permissions.**
+> **Autonomous mode requires sandbox and permissions configuration.**
 >
-> Since implementation runs in an isolated worktree, all file
-> operations are safe to allow. Add these entries to your project's
-> `.claude/settings.local.json` under `"permissions" > "allow"`:
+> 1. Create the commands directory if it doesn't exist:
+>    `mkdir -p .claude/commands`
+>
+> 2. Ensure `.claude/settings.local.json` contains both permissions
+>    and sandbox settings. Adapt the test runner and language-specific
+>    patterns to your project:
 >
 > ```json
-> [
->   "Bash(git:*)",
->   "Bash(gh:*)",
->   "Bash(npm test:*)",
->   "Bash(pytest:*)",
->   "Read(*)",
->   "Write(*)",
->   "Edit(*)",
->   "Glob(*)",
->   "Grep(*)"
-> ]
+> {
+>   "permissions": {
+>     "allow": [
+>       "Bash(git:*)",
+>       "Bash(gh:*)",
+>       "Bash(npm test:*)",
+>       "Bash(pytest:*)",
+>       "Bash(pip:*)",
+>       "Bash(which:*)",
+>       "Bash(echo:*)",
+>       "Bash(ls:*)",
+>       "Read(*)",
+>       "Write(*)",
+>       "Edit(*)",
+>       "Glob(*)",
+>       "Grep(*)"
+>     ]
+>   },
+>   "sandbox": {
+>     "enabled": true,
+>     "autoAllowBashIfSandboxed": true
+>   }
+> }
 > ```
 >
-> Adapt the test runner patterns to your project. Then re-invoke
+> The `sandbox` block enables sandboxing (file writes restricted to
+> the project directory) while `autoAllowBashIfSandboxed` auto-approves
+> bash commands that the sandbox would contain — eliminating approval
+> prompts without sacrificing isolation. Then re-invoke
 > `/implement-ship-all`.
 
 Only proceed to Step 1 when all test commands pass without prompts.
@@ -90,12 +115,7 @@ Identify all phases marked `TODO`. Print the progress dashboard
 phases remaining. Will only stop for blockers." Then begin
 immediately — do not ask for confirmation.
 
-### 2. Pipeline Loop
-
-This skill uses **1-ahead pipelining**: while one phase's PR is in
-flight (CI running, review pending), the next phase is already being
-implemented. At most one PR is in flight and one phase is being
-implemented at any time.
+### 2. Sequential Loop
 
 For each remaining `TODO` phase, in order:
 
@@ -103,74 +123,41 @@ For each remaining `TODO` phase, in order:
    with their current status.
 
 2. **Implement** the phase using the **implement** skill (Steps 1–7):
-   - If a predecessor phase's PR is in flight (not yet merged), set
-     `base_branch` to the predecessor's feature branch instead of main.
-     This ensures the new phase has access to the predecessor's code.
+   - Always branch from the latest main branch
+     (`git pull origin <main-branch>` first).
    - Pass **autonomous mode** context so the implement skill skips all
      confirmation prompts.
    - If implementation fails or is blocked, stop the loop and inform
      the user. Do not skip — later phases may depend on this one.
 
-3. **Reconciliation checkpoint** (after implementation, before shipping):
-   Check the predecessor's PR status (if one is in flight):
-
-   a. **Predecessor merged**: Rebase current phase onto main
-      (`git rebase <main-branch>`). Main now includes the predecessor's
-      code, so the current phase's branch is clean.
-   b. **Predecessor still open, with new commits** (monitor-pr pushed
-      CI fixes or addressed review feedback): Rebase current phase onto
-      the predecessor's latest branch. Then scan the new commits
-      (`git log $(git merge-base HEAD origin/<predecessor-branch>)..origin/<predecessor-branch> --oneline`) — if
-      they touch files or APIs used by the current phase, review the
-      changes and adapt the current phase's code accordingly. Run tests
-      after adapting.
-   c. **Predecessor has CHANGES_REQUESTED that monitor-pr couldn't
-      handle** (substantive design disagreements): Pause the pipeline
-      and alert the user. Do not ship the current phase until the
-      predecessor's review is resolved.
-   d. **Predecessor still open, no new commits, CI pending**: No action
-      needed — proceed to shipping (which will wait for the predecessor
-      to merge before creating the PR).
-
-   After any rebase, run the project's test suite to verify the phase
-   still works. Fix any breakage before proceeding.
-
-4. **Ship** the phase:
-   - If the predecessor's PR is NOT yet merged: wait for it first.
+3. **Ship** the phase using the **ship** skill (Steps 1–4):
+   - The ship skill commits, pushes, creates the PR, and starts
+     background monitoring via monitor-pr.
+   - After monitor-pr creates the cron job, **wait for the merge**.
      Poll every 2 minutes with
      `gh pr view <pr> --json state --jq '.state'`.
-     - If state is `CLOSED`: stop the pipeline and alert the user:
-       "Predecessor PR #{N} was closed without merging. Cannot
-       continue — phase {X} depends on it."
-     - If state is `MERGED`: rebase the current phase onto main
-       (`git rebase <main-branch>`), run tests, then proceed.
-     - Otherwise: print status updates every other check ("Waiting
-       for PR #{N} to merge before shipping phase {X}...").
-   - Run the **ship** skill (Steps 1–4 only). The ship skill detects
-     `mode: "implement-ship-all"` in the state file and operates in
-     **pipeline mode**: it commits, pushes, creates the PR, starts
-     the background monitor, and then **returns control immediately**
-     without waiting for merge (Steps 5–7 are skipped — the
-     monitor-pr cron handles cleanup and plan updates autonomously).
-   - After the ship skill returns, record the PR number and monitor
-     cron ID as `in_flight_pr` in the state file, then move to the
-     next phase.
+     - If state is `CLOSED`: stop the loop and alert the user:
+       "PR #{N} was closed without merging. Cannot continue."
+     - If state is `MERGED`: pull main and continue to the next phase.
 
-5. **Move to next phase**: Loop back to step 1 for the next `TODO`
-   phase. The current phase's PR is now monitored in the background
-   while implementation of the next phase begins.
+4. **Move to next phase**: `git pull origin <main-branch>`, then loop
+   back to step 1 for the next `TODO` phase.
 
-**After the last phase is implemented and shipped**, wait for the final
-PR to merge (monitor-pr handles this). Check every 2 minutes until
-merged, then proceed to Completion.
+**Batching tightly coupled phases**: If remaining phases are small and
+tightly coupled (each builds directly on the previous with no
+meaningful standalone value), you may implement multiple phases in a
+single worktree and ship them as one PR. Use your judgment — batching
+is appropriate when per-phase PRs would create unnecessary overhead.
+When batching, mark all included phases as `IMPLEMENTED` in the plan
+before shipping, and `MERGED` after the single PR merges.
+
+**After the last phase is shipped and merged**, proceed to Completion.
 
 **Autonomous mode**: When this skill invokes implement and ship, those
 skills MUST skip all "Proceed?" and "Confirm?" prompts (detected via
 the `mode: "implement-ship-all"` field in the state file). Specifically:
 - implement Step 2: Do not ask "Starting {phase}. Proceed?" — just
   start the phase.
-- implement-ship Step 2 (gate check): Only stop if the phase is NOT
-  `IMPLEMENTED`. Do not prompt on success.
 - ship Step 1: Do not ask the user whether to finalize — if the phase
   is `IMPLEMENTED`, proceed directly.
 - State tracking startup: Do not ask "Resume or start over?" — resume
@@ -214,14 +201,12 @@ Followed by a table:
   unexpectedly (e.g., CronCreate quirks, `gh` CLI edge cases)
 - **plan-deviation** — The plan's steps didn't match reality (files
   moved, APIs changed, missing dependencies)
-- **review-churn** — The deep review loop required 3+ iterations,
+- **review-churn** — The deep review loop required 4+ iterations,
   suggesting the plan or implementation guidance was underspecified
 - **ci-friction** — CI failures that were hard to diagnose or required
   workarounds
 - **state-issue** — State tracking or resume didn't work as expected
 - **scope-creep** — Had to make changes outside the phase's listed files
-- **pipeline-conflict** — Predecessor PR changes required adapting the
-  current phase's code during reconciliation
 
 **Impact levels:**
 - **blocker** — Stopped the autonomous run
@@ -252,15 +237,20 @@ statuses with actual values.
 
 Status indicators:
 - `✓` — MERGED (done)
-- `⟳` — PR_OPEN (PR created, CI/review in progress — monitored in background)
+- `⟳` — PR_OPEN (PR created, CI/review in progress)
 - `▸` — IN_PROGRESS (currently implementing this phase)
 - `·` — TODO (not started)
 - `✗` — BLOCKED or FAILED (stopped)
 
 ## Required Permissions
 
-For autonomous operation without approval prompts, the user's
-`.claude/settings.local.json` must allow these tools:
+For autonomous operation without approval prompts, the project needs:
+
+1. **`.claude/commands/` directory** — must exist (even if empty).
+   The sandbox checks for this directory; without it, git and gh
+   commands are blocked.
+
+2. **`.claude/settings.local.json`** with permissions and sandbox config:
 
 ```json
 {
@@ -270,46 +260,49 @@ For autonomous operation without approval prompts, the user's
       "Bash(gh:*)",
       "Bash(npm test:*)",
       "Bash(pytest:*)",
+      "Bash(pip:*)",
+      "Bash(which:*)",
+      "Bash(echo:*)",
+      "Bash(ls:*)",
       "Read(*)",
       "Write(*)",
       "Edit(*)",
       "Glob(*)",
       "Grep(*)"
     ]
+  },
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true
   }
 }
 ```
 
-Adapt the test runner patterns (`npm test`, `pytest`, `cargo test`,
-etc.) to the project. `CronCreate`, `CronDelete`, `CronList`, and
-`Agent` do not require explicit permission entries.
+Adapt the test runner and language-specific patterns to the project
+(e.g., `Bash(cargo test:*)`, `Bash(python3:*)`,
+`Bash(KERAS_BACKEND=torch python3:*)`). `CronCreate`, `CronDelete`,
+`CronList`, and `Agent` do not require explicit permission entries.
+
+The `sandbox` block is the key to zero-prompt autonomous runs:
+`enabled: true` restricts file writes to the project directory (safe
+for worktree-isolated work), and `autoAllowBashIfSandboxed: true`
+auto-approves bash commands within that sandbox. Without this combo,
+every git/gh command triggers a user approval prompt.
 
 If permissions are not configured, the skill still works but will
 pause for user approval on each tool call — defeating the purpose
-of autonomous mode. Before starting, check if common commands like
-`git status` and `gh pr view` execute without approval prompts. If
-they do, permissions are likely sufficient. If not, inform the user
-what to configure.
+of autonomous mode. The Permission Pre-flight (Step 0) detects this
+and tells the user what to configure.
 
 ## Notes
 
 - Each phase goes through the full implement-ship cycle including all
   quality gates (simplify, deep review, CI). No shortcuts.
-- **Pipeline model**: At most one PR is in flight while the next phase
-  is being implemented. This overlaps implementation time with CI/review
-  time for significant throughput gains. Phases still merge sequentially
-  — phase N must merge before phase N+1's PR is created.
-- Phases branch from their predecessor's feature branch (not main) when
-  the predecessor hasn't merged yet. After the predecessor merges, the
-  phase is rebased onto main before shipping.
-- **Reconciliation**: Before shipping each phase, the skill checks if
-  the predecessor's PR received fixes (from monitor-pr or reviewers).
-  If those fixes touch code the current phase depends on, it adapts
-  the current phase accordingly. This prevents shipping code that's
-  built on stale assumptions.
+- Phases always branch from the latest main. After each phase merges,
+  pull main before starting the next phase.
 - If the user interrupts the loop, they can resume by invoking
   `/implement-ship-all` again — it reads the state file and plan
-  status table to determine what's in flight and what's next.
+  status table to determine what's next.
 - **Autonomous mode**: This skill runs with minimal user interaction.
   It only stops for genuine blockers (failed CI after 2+ retries,
   substantive review disagreements, ambiguous merge conflicts). All
