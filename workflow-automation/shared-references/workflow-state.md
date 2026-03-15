@@ -7,11 +7,8 @@ and read on startup to detect resumable work.
 
 ## Location
 
-The state file lives in the same directory as the plan document:
-- If the plan is at `dev/plans/plan-csv-export.md`, the state file
-  is at `dev/plans/.workflow-state.json`
-- If no plan exists (ad-hoc implementation), place it in the project
-  root
+The state file lives in the project root (`.workflow-state.json`).
+Add it to `.gitignore` to avoid committing it.
 
 ## Schema
 
@@ -24,16 +21,9 @@ The state file lives in the same directory as the plan document:
   "step_name": "Execute the Phase",
   "branch": "feat/csv-export-phase2",
   "worktree": "../feat-csv-export-phase2",
-  "base_branch": "feat/csv-export-phase1",
   "pr_number": null,
   "monitor_cron_id": null,
   "mode": "implement-ship-all",
-  "in_flight_pr": {
-    "phase": "Phase 1: Core export",
-    "branch": "feat/csv-export-phase1",
-    "pr_number": 42,
-    "monitor_cron_id": "abc123"
-  },
   "last_updated": "2026-03-10T14:32:00Z"
 }
 ```
@@ -49,11 +39,9 @@ The state file lives in the same directory as the plan document:
 | `step_name` | string | Human-readable step name |
 | `branch` | string | Git branch for this phase |
 | `worktree` | string \| null | Worktree path, or null if using a regular branch |
-| `base_branch` | string \| null | Branch this phase was created from. Defaults to main. In pipeline mode, may be a predecessor's feature branch |
 | `pr_number` | number \| null | PR number if created, otherwise null |
 | `monitor_cron_id` | string \| null | CronCreate job ID if monitoring is active |
 | `mode` | string | `single` (one phase), `implement-ship`, or `implement-ship-all` |
-| `in_flight_pr` | object \| null | Predecessor phase's PR being monitored in background (pipeline mode only). Contains `phase`, `branch`, `pr_number`, `monitor_cron_id` |
 | `last_updated` | string | ISO 8601 timestamp |
 
 ## Read Protocol (all skills)
@@ -87,16 +75,7 @@ On startup, before doing anything else:
 
 ### monitor-pr
 - **Step 4** (cron created): Update skill=monitor-pr, set monitor_cron_id
-- **Post-merge cleanup**:
-  - **Normal mode** (`single` or `implement-ship`): Clear (delete) the
-    state file after successful merge.
-  - **Pipeline mode** (`implement-ship-all`): Do NOT delete the state
-    file — it may be tracking the successor phase. Instead, clear only
-    the `in_flight_pr` field (set to `null`) and leave the rest of the
-    state intact. The successor phase's fields (`phase`, `skill`,
-    `step`, `branch`, `worktree`) must be preserved for resume.
-    Exception: if no `TODO` phases remain in the plan, this is the
-    final phase — delete the state file as the pipeline is complete.
+- **Post-merge cleanup**: Delete the state file after successful merge.
 
 ### implement-ship
 - Delegates to implement and ship, which handle their own state.
@@ -105,12 +84,6 @@ On startup, before doing anything else:
 ### implement-ship-all
 - Delegates to implement and ship, which handle their own state.
   The `mode` field is set to `"implement-ship-all"`.
-- **Pipeline tracking**: When a phase's PR is created and monitoring
-  starts, the phase's PR info is moved to `in_flight_pr` before the
-  next phase begins. On resume, check `in_flight_pr` to determine if
-  a predecessor PR needs monitoring or has merged.
-- `base_branch` is set to the predecessor's feature branch when
-  pipelining, so the implement skill branches from it.
 
 ## Lifecycle
 
@@ -124,10 +97,6 @@ On startup, before doing anything else:
   `.workflow-state.json` to your `.gitignore` to avoid committing it.
 - If the state file conflicts with the plan's status table, the plan
   is the source of truth. Delete the state file and reconcile.
-- The state file tracks ONE active phase plus optionally one in-flight
-  predecessor PR (via `in_flight_pr`). When a phase completes and the
-  next one starts, the current phase's PR info moves to `in_flight_pr`
-  and the new phase takes the main fields.
-- `base_branch` records what branch a phase was created from. In
-  pipeline mode this is the predecessor's feature branch; otherwise
-  it's the main branch. This is needed for reconciliation rebases.
+- The state file tracks ONE active phase at a time. When a phase
+  merges, the state file is deleted. The next phase creates a fresh
+  state file when it starts.

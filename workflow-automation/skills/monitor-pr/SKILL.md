@@ -103,7 +103,7 @@ review triage before merging, then cleans up after a successful merge:
 
 - **Bot review triage** (before merge): Check for actionable inline
   review comments from automated reviewers (CodeRabbit, Copilot). If
-  found, fix and push; next cycle will re-check. Caps at 2 fix attempts.
+  found, fix and push; next cycle will re-check. Caps at 6 fix attempts.
 
 - **Worktree cleanup** (if a worktree path was recorded):
   1. Ensure the working directory is the main repo root (use
@@ -130,7 +130,7 @@ Monitoring stops automatically when:
 - The PR is merged (success)
 - The PR is closed externally
 - CI fix attempts exceed the threshold (>2 `fix(ci):` commits)
-- Review fix attempts exceed the threshold (>2 `fix(review):` commits)
+- Review fix attempts exceed the threshold (>6 `fix(review):` commits)
 - The cron job auto-expires (3-day limit)
 
 The user can stop monitoring manually by saying "stop monitoring" or
@@ -140,9 +140,8 @@ The user can stop monitoring manually by saying "stop monitoring" or
 
 The following is the prompt text to use with CronCreate. Replace
 `{pr_number}`, `{branch}`, `{worktree_path}`, `{merge_strategy}`,
-`{main_branch}`, `{cron_job_id}`, `{mode}`, and `{plan_file}` with
-actual values at creation time. `{mode}` is the workflow mode from the
-state file (`single`, `implement-ship`, or `implement-ship-all`).
+`{main_branch}`, `{cron_job_id}`, and `{plan_file}` with
+actual values at creation time.
 `{plan_file}` is the resolved path to the plan document (e.g.,
 `dev/plans/plan-my-feature.md`), or `none` if no plan exists.
 
@@ -162,9 +161,12 @@ Check the status of PR #{pr_number} (branch: {branch}) and take action:
      - If any checks failed: continue to step 3.
 
 3. CI failure handling:
-   a. Count prior fix attempts: git log --oneline origin/{main_branch}..origin/{branch} --grep="fix(ci):" | wc -l
-   b. If count > 2: cancel this cron job (CronDelete job {cron_job_id}). Tell the user: "PR #{pr_number} has failed CI {count} times. Stopping monitor — please investigate manually."
-   c. If count <= 2: get the failed run ID with gh run list --branch {branch} --status failure --limit 1 --json databaseId --jq '.[0].databaseId', then read logs with gh run view <run-id> --log-failed. Diagnose and fix the issue if straightforward (test failures, lint errors, type errors, missing imports). Commit with message "fix(ci): <description>" and push to {branch}. If the failure is ambiguous or infrastructure-related, tell the user and wait for next cycle. Stop after pushing — next cycle will check results.
+   a. Pre-existing failure check: before attempting a fix, check if main also fails:
+      gh run list --branch {main_branch} --limit 1 --json conclusion --jq '.[0].conclusion'
+      If main's latest run also failed, compare the failing job names on both branches. If the same jobs fail on both, this is a pre-existing failure — log "PR #{pr_number}: CI failures match main branch (pre-existing). Proceeding to merge readiness." and skip to step 4.
+   b. Count prior fix attempts: git log --oneline origin/{main_branch}..origin/{branch} --grep="fix(ci):" | wc -l
+   c. If count > 2: cancel this cron job (CronDelete job {cron_job_id}). Tell the user: "PR #{pr_number} has failed CI {count} times. Stopping monitor — please investigate manually."
+   d. If count <= 2: get the failed run ID with gh run list --branch {branch} --status failure --limit 1 --json databaseId --jq '.[0].databaseId', then read logs with gh run view <run-id> --log-failed. Diagnose and fix the issue if straightforward (test failures, lint errors, type errors, missing imports). Commit with message "fix(ci): <description>" and push to {branch}. If the failure is ambiguous or infrastructure-related, tell the user and wait for next cycle. Stop after pushing — next cycle will check results.
 
 4. Merge readiness (all CI checks passed):
    a. If reviewDecision is CHANGES_REQUESTED: read review comments with gh api repos/:owner/:repo/pulls/{pr_number}/reviews. Address simple feedback (typos, naming, small fixes), commit and push. For substantive design disagreements, tell the user and wait.
@@ -179,7 +181,7 @@ Check the status of PR #{pr_number} (branch: {branch}) and take action:
 
    a. Bot review triage gate (run before every merge attempt):
       First, count prior fix(review) attempts: git log --oneline --grep="fix(review):" origin/{main_branch}..origin/{branch} | wc -l
-      If count > 2: cancel this cron job (CronDelete job {cron_job_id}). Tell the user: "PR #{pr_number} has had {count} review fix attempts. Stopping monitor — please address review comments manually." Stop.
+      If count > 6: cancel this cron job (CronDelete job {cron_job_id}). Tell the user: "PR #{pr_number} has had {count} review fix attempts. Stopping monitor — please address review comments manually." Stop.
 
       Check for the most recent fix(review) commit timestamp (in UTC):
       git log --format="%aI" --grep="fix(review):" origin/{main_branch}..origin/{branch} | head -1
@@ -198,19 +200,11 @@ Check the status of PR #{pr_number} (branch: {branch}) and take action:
       gh pr merge {pr_number} {merge_strategy} --delete-branch
    - On success: cancel this cron job (CronDelete job {cron_job_id}). Say "PR #{pr_number} merged successfully."
      Then clean up:
-     c. Ensure CWD is the main repo root (not inside a worktree): get the main worktree path from git worktree list (the first entry is always the main worktree) and cd there. Do NOT use git rev-parse --show-toplevel — it returns the current worktree's root, not the main repo's. Then check whether this branch is checked out in any other worktree: git worktree list --porcelain | grep -F "branch refs/heads/{branch}".
-        - If YES (branch is in another worktree): do NOT delete the local branch — a successor phase may need it for rebase. Only remove the worktree (if path is not "none") with git worktree remove --force {worktree_path}.
-        - If NO (branch is not in another worktree): remove the worktree (if not "none") with git worktree remove --force {worktree_path}, then delete the local branch with git branch -d {branch}. If -d fails (branch not fully merged into current HEAD), use git branch -D {branch} — this is safe because the PR was just merged on the remote.
-     (Run either the YES or NO branch above, not both.)
+     c. Ensure CWD is the main repo root (not inside a worktree): get the main worktree path from git worktree list (the first entry is always the main worktree) and cd there. Do NOT use git rev-parse --show-toplevel — it returns the current worktree's root, not the main repo's.
+        Remove the worktree (if path is not "none") with git worktree remove --force {worktree_path}, then delete the local branch with git branch -d {branch}. If -d fails (branch not fully merged into current HEAD), use git branch -D {branch} — this is safe because the PR was just merged on the remote.
      e. Run git pull origin {main_branch}. If it fails due to uncommitted local changes, report the error — do not stash automatically.
      If {plan_file} is not "none": update the current phase to MERGED with the PR URL in {plan_file}, then check remaining TODO phases: TODO_COUNT=$(grep -c "| TODO |" "{plan_file}" || echo "0"). If TODO_COUNT is 0, rename the plan: git mv "{plan_file}" "{plan_file%.md}-done.md" 2>/dev/null || mv "{plan_file}" "{plan_file%.md}-done.md" && git commit -m "mark plan complete". Inform the user of remaining phases or completion. If {plan_file} is "none", skip plan updates.
-     f. Update .workflow-state.json based on {mode}:
-        - If mode is "implement-ship-all":
-          If {plan_file} is not "none" and TODO_COUNT is 0 (all phases done): rm .workflow-state.json (pipeline complete).
-          Otherwise (phases remain, or no plan file): clear in_flight_pr (the predecessor merged, but successor tracking continues):
-          jq '.in_flight_pr = null' .workflow-state.json > .workflow-state.json.tmp && mv .workflow-state.json.tmp .workflow-state.json
-        - If mode is "single" or "implement-ship": delete the state file:
-          rm .workflow-state.json
+     f. Clean up state: rm .workflow-state.json
    - On failure: report the error to the user. Do NOT cancel monitoring — the issue may resolve on the next cycle.
 ```
 
@@ -233,10 +227,6 @@ Check the status of PR #{pr_number} (branch: {branch}) and take action:
 - **Protected branches**: If merge fails due to branch protection
   rules the monitor can't satisfy, inform the user and continue
   monitoring.
-- **Pipeline mode — successor branch depends on this branch**: The
-  cron checks for dependent branches before deleting the local branch
-  after merge. If a successor phase's branch was based on this one,
-  the local branch is preserved until the successor rebases onto main.
 - **Bot reviewers post comments without setting reviewDecision**: The
   cron prompt fetches and triages inline review comments (step 5a)
   before every merge attempt. This catches CodeRabbit, Copilot, and
