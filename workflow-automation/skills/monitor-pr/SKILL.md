@@ -73,6 +73,14 @@ Before creating the cron job:
   (`;`, `&`, `|`, `$`, backticks, spaces, etc.), refuse to monitor
   and warn the user — a malicious branch name could inject commands
   into the cron prompt. Similarly validate the worktree path.
+- **SSH connectivity check**: Test that git can reach the remote:
+  `git ls-remote --exit-code origin HEAD`
+  If this fails (DNS resolution, SSH timeout), automatically switch
+  the remote URL to HTTPS:
+  `git remote set-url origin "$(gh repo view --json url --jq '.url').git"`
+  Record the original URL so it can be restored after monitoring
+  completes. Add `REMOTE_URL_SWITCHED=true` to the cron prompt
+  context so post-merge cleanup can restore it.
 - Check if any existing cron jobs already monitor this PR: use
   CronList and look for the PR number in existing prompts. If found,
   inform the user and ask whether to replace the existing monitor or
@@ -140,10 +148,15 @@ The user can stop monitoring manually by saying "stop monitoring" or
 
 The following is the prompt text to use with CronCreate. Replace
 `{pr_number}`, `{branch}`, `{worktree_path}`, `{merge_strategy}`,
-`{main_branch}`, `{cron_job_id}`, and `{plan_file}` with
-actual values at creation time.
+`{main_branch}`, `{cron_job_id}`, `{plan_file}`,
+`{original_remote_url}`, and `{remote_url_switched}` with actual
+values at creation time.
 `{plan_file}` is the resolved path to the plan document (e.g.,
 `dev/plans/plan-my-feature.md`), or `none` if no plan exists.
+`{original_remote_url}` is the remote URL recorded before any
+SSH→HTTPS switch, or `none` if no switch occurred.
+`{remote_url_switched}` is `true` if the remote was switched to
+HTTPS during pre-flight, otherwise `false`.
 
 ```
 Check the status of PR #{pr_number} (branch: {branch}) and take action:
@@ -171,7 +184,21 @@ Check the status of PR #{pr_number} (branch: {branch}) and take action:
 4. Merge readiness (all CI checks passed):
    a. If reviewDecision is CHANGES_REQUESTED: read review comments with gh api repos/:owner/:repo/pulls/{pr_number}/reviews. Address simple feedback (typos, naming, small fixes), commit and push. For substantive design disagreements, tell the user and wait.
    b. If reviewDecision is REVIEW_REQUIRED: tell the user approvals are needed (do this once — check if you already said this recently before repeating).
-   c. If mergeable is CONFLICTING: attempt rebase onto {main_branch}. If conflicts are trivial (import ordering, whitespace), resolve, commit, push. If ambiguous, tell the user and wait.
+   c. If mergeable is CONFLICTING:
+      Attempt rebase in a temporary worktree to avoid WSL file-locking:
+        REBASE_DIR="${TMPDIR:-/tmp/claude-1000}/rebase-{pr_number}"
+        git worktree add "$REBASE_DIR" {branch}
+        cd "$REBASE_DIR"
+        git rebase origin/{main_branch}
+      If the rebase hits conflicts, check which files conflict:
+        git diff --name-only --diff-filter=U
+      - If the ONLY conflicting files are .ipynb notebooks: take the base branch version for each (git checkout origin/{main_branch} -- <file>), then git add <file> and git rebase --continue. Notebooks are JSON blobs that cannot be meaningfully merged — their outputs are regenerable. Tell the user which notebooks were reset.
+      - For trivial non-notebook conflicts (import ordering, whitespace): resolve, git add, and git rebase --continue.
+      - For ambiguous conflicts: git rebase --abort, tell the user, and wait. Do NOT retry on the next cycle — escalate immediately.
+      After successful rebase:
+        git push --force-with-lease
+        cd -
+        git worktree remove "$REBASE_DIR"
    d. If mergeable is UNKNOWN: wait for next cycle.
 
    e. If reviewDecision is any other unexpected value: tell the user
@@ -190,7 +217,9 @@ Check the status of PR #{pr_number} (branch: {branch}) and take action:
       Fetch inline review comments (these capture CodeRabbit/Copilot line-level findings):
       gh api repos/:owner/:repo/pulls/{pr_number}/comments --paginate --jq '[.[] | {user: .user.login, body: .body, path: .path, created_at: .created_at}]'
 
-      If LAST_FIX_TIME is set, discard any comments with created_at <= LAST_FIX_TIME — those were already addressed by the fix commit.
+      Discard stale comments using two filters:
+      a. If LAST_FIX_TIME is set, discard any comments with created_at <= LAST_FIX_TIME — those were already addressed by the fix commit.
+      b. Check if the base branch was updated since the comment was posted: get the most recent merge commit on {main_branch} with `gh api repos/:owner/:repo/commits?sha={main_branch}&per_page=1 --jq '.[0].commit.committer.date'`. Discard any bot comments with created_at before this timestamp — they were written against a now-outdated base and may reference code that has since changed. Note: normalize both timestamps to UTC before comparing. Caveat: this filter is intentionally coarse — it may discard comments that are still relevant if main was updated by an unrelated PR. This tradeoff is acceptable because false negatives (skipping a valid comment) are recoverable on the next cycle, while false positives (endlessly fixing stale comments) cause infinite fix loops.
 
       Triage remaining comments: classify as actionable (bug report, crash scenario, missing validation, wrong logic, type error) or non-actionable (style suggestion, praise, summary walkthrough, question already answered by the code).
       - If ANY actionable comments exist: address at most 5 per cycle, prioritizing by severity (crashes > wrong logic > missing validation > type errors). Commit with message "fix(review): <description>", push to {branch}. Say "PR #{pr_number}: addressed review comments, waiting for re-review." Stop — next cycle will re-check after bots re-review.
@@ -202,9 +231,10 @@ Check the status of PR #{pr_number} (branch: {branch}) and take action:
      Then clean up:
      c. Ensure CWD is the main repo root (not inside a worktree): get the main worktree path from git worktree list (the first entry is always the main worktree) and cd there. Do NOT use git rev-parse --show-toplevel — it returns the current worktree's root, not the main repo's.
         Remove the worktree (if path is not "none") with git worktree remove --force {worktree_path}, then delete the local branch with git branch -d {branch}. If -d fails (branch not fully merged into current HEAD), use git branch -D {branch} — this is safe because the PR was just merged on the remote.
+     d. If {remote_url_switched} is "true", restore the original remote URL: git remote set-url origin {original_remote_url}
      e. Run git pull origin {main_branch}. If it fails due to uncommitted local changes, report the error — do not stash automatically.
-     If {plan_file} is not "none": update the current phase to MERGED with the PR URL in {plan_file}, then check remaining TODO phases: TODO_COUNT=$(grep -c "| TODO |" "{plan_file}" || echo "0"). If TODO_COUNT is 0, rename the plan: git mv "{plan_file}" "{plan_file%.md}-done.md" 2>/dev/null || mv "{plan_file}" "{plan_file%.md}-done.md" && git commit -m "mark plan complete". Inform the user of remaining phases or completion. If {plan_file} is "none", skip plan updates.
-     f. Clean up state: rm .workflow-state.json
+     f. If {plan_file} is not "none": update the current phase to MERGED with the PR URL in {plan_file}, then check remaining TODO phases: TODO_COUNT=$(grep -c "| TODO |" "{plan_file}" || echo "0"). If TODO_COUNT is 0, rename the plan: git mv "{plan_file}" "{plan_file%.md}-done.md" 2>/dev/null || mv "{plan_file}" "{plan_file%.md}-done.md" && git commit -m "mark plan complete". Inform the user of remaining phases or completion. If {plan_file} is "none", skip plan updates.
+     g. Clean up state: rm .workflow-state.json
    - On failure: report the error to the user. Do NOT cancel monitoring — the issue may resolve on the next cycle.
 ```
 
