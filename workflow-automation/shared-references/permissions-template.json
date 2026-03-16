@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git:*)",
+      "Bash(gh:*)",
+      "Bash(which:*)",
+      "Bash(echo:*)",
+      "Bash(diff:*)",
+      "Bash(ls:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Read(*)",
+      "Write(*)",
+      "Edit(*)",
+      "Glob(*)",
+      "Grep(*)"
+    ]
+  },
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true,
+    "excludedCommands": ["git", "gh"]
+  }
+}

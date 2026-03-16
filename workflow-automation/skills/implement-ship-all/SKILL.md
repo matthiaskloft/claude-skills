@@ -47,9 +47,15 @@ configuration needed for autonomous operation.
    `mkdir -p .claude/commands`
    (The sandbox requires this directory to exist — without it, all
    git and gh commands are blocked.)
-2. Check `.claude/settings.local.json` exists and contains both
-   `permissions.allow` and `sandbox` configuration. If the file is
-   missing or incomplete, inform the user (see message below).
+2. Read the permissions template from
+   `../../shared-references/permissions-template.json` (relative to
+   this skill file). This template contains the baseline permissions
+   and sandbox configuration needed for autonomous operation.
+3. Check `.claude/settings.local.json` exists and contains **at least**
+   every entry from the template's `permissions.allow` list and the
+   `sandbox` block. The user may have added project-specific entries
+   (e.g., `Bash(pytest:*)`, `Bash(npm test:*)`) — those are fine. Only
+   flag entries that are **missing** from the template baseline.
 
 **b. Run permission test commands:**
 
@@ -58,43 +64,25 @@ configuration needed for autonomous operation.
 3. Read the plan file or `CLAUDE.md` — tests Read permission
 4. `echo "preflight" > /dev/null` — tests general Bash permission
 
-If **any command triggers a user approval prompt** or **the sandbox
-blocks a command**, stop and print:
+If **any command triggers a user approval prompt**, **the sandbox
+blocks a command**, or **the settings file is missing template
+entries**, stop and print:
 
 > **Autonomous mode requires sandbox and permissions configuration.**
 >
 > 1. Create the commands directory if it doesn't exist:
 >    `mkdir -p .claude/commands`
 >
-> 2. Ensure `.claude/settings.local.json` contains both permissions
->    and sandbox settings. Adapt the test runner and language-specific
->    patterns to your project:
+> 2. Copy the permissions template to your project and add any
+>    project-specific entries (test runners, language tools, etc.):
+>    `cp <plugin-path>/shared-references/permissions-template.json .claude/settings.local.json`
 >
-> ```json
-> {
->   "permissions": {
->     "allow": [
->       "Bash(git:*)",
->       "Bash(gh:*)",
->       "Bash(npm test:*)",
->       "Bash(pytest:*)",
->       "Bash(pip:*)",
->       "Bash(which:*)",
->       "Bash(echo:*)",
->       "Bash(ls:*)",
->       "Read(*)",
->       "Write(*)",
->       "Edit(*)",
->       "Glob(*)",
->       "Grep(*)"
->     ]
->   },
->   "sandbox": {
->     "enabled": true,
->     "autoAllowBashIfSandboxed": true
->   }
-> }
-> ```
+>    Then add your project-specific patterns, e.g.:
+>    ```
+>    "Bash(pytest:*)",
+>    "Bash(KERAS_BACKEND=torch pytest:*)",
+>    "Bash(npm test:*)"
+>    ```
 >
 > The `sandbox` block enables sandboxing (file writes restricted to
 > the project directory) while `autoAllowBashIfSandboxed` auto-approves
@@ -115,41 +103,57 @@ Identify all phases marked `TODO`. Print the progress dashboard
 phases remaining. Will only stop for blockers." Then begin
 immediately — do not ask for confirmation.
 
-### 2. Sequential Loop
+### 2. Implement All Phases
+
+**Default: batch all phases into one PR.** Most plan phases are
+tightly coupled and per-phase PRs create unnecessary overhead.
+Implement all remaining `TODO` phases sequentially in a single
+worktree, then ship once.
+
+**Exception: split into separate PRs** only when a phase is large
+enough to warrant independent review — substantial new features,
+major refactors, or 100+ lines of non-trivial changes.
+
+#### Batched flow (default)
+
+1. Pull the latest main: `git pull origin <main-branch>`.
+2. Create a single worktree for the batch.
+3. Print the progress dashboard (see format below).
+4. For each remaining `TODO` phase, in order:
+   a. **Implement** the phase using the **implement** skill
+      (Steps 1–7). Pass **autonomous mode** context so the implement
+      skill skips all confirmation prompts. If implementation fails
+      or is blocked, stop the loop and inform the user — later phases
+      may depend on this one.
+   b. Mark the phase as `IMPLEMENTED` in the plan.
+   c. Update the progress dashboard.
+5. **Quality gate check** (mandatory before shipping):
+   Run the implement skill's Step 4 (Simplify) and Step 5 (Deep
+   Review Loop) on the combined diff of all phases. Do NOT ship
+   code that has not been through both simplify and deep review.
+6. **Ship** the batch using the **ship** skill (Steps 1–7):
+   - The ship skill commits, pushes, creates the PR, and starts
+     background monitoring via monitor-pr.
+   - **Wait for the merge**. Poll every 2 minutes with
+     `gh pr view <pr> --json state --jq '.state'`.
+     - If state is `CLOSED`: alert the user and stop.
+     - If state is `MERGED`: mark all batched phases as `MERGED`
+       and proceed to Completion.
+
+#### Split flow (large phases only)
 
 For each remaining `TODO` phase, in order:
 
-1. Print the progress dashboard (see format below) showing all phases
-   with their current status.
-
-2. **Implement** the phase using the **implement** skill (Steps 1–7):
-   - Always branch from the latest main branch
-     (`git pull origin <main-branch>` first).
-   - Pass **autonomous mode** context so the implement skill skips all
-     confirmation prompts.
-   - If implementation fails or is blocked, stop the loop and inform
-     the user. Do not skip — later phases may depend on this one.
-
-3. **Ship** the phase using the **ship** skill (Steps 1–4):
-   - The ship skill commits, pushes, creates the PR, and starts
-     background monitoring via monitor-pr.
-   - After monitor-pr creates the cron job, **wait for the merge**.
-     Poll every 2 minutes with
-     `gh pr view <pr> --json state --jq '.state'`.
-     - If state is `CLOSED`: stop the loop and alert the user:
-       "PR #{N} was closed without merging. Cannot continue."
-     - If state is `MERGED`: pull main and continue to the next phase.
-
-4. **Move to next phase**: `git pull origin <main-branch>`, then loop
-   back to step 1 for the next `TODO` phase.
-
-**Batching tightly coupled phases**: If remaining phases are small and
-tightly coupled (each builds directly on the previous with no
-meaningful standalone value), you may implement multiple phases in a
-single worktree and ship them as one PR. Use your judgment — batching
-is appropriate when per-phase PRs would create unnecessary overhead.
-When batching, mark all included phases as `IMPLEMENTED` in the plan
-before shipping, and `MERGED` after the single PR merges.
+1. Print the progress dashboard.
+2. Pull the latest main: `git pull origin <main-branch>`.
+3. **Implement** the phase using the **implement** skill (Steps 1–7).
+4. **Quality gate check**: Verify Steps 4 (Simplify) and 5 (Deep
+   Review) were executed. If either was skipped, run them now.
+5. **Ship** the phase using the **ship** skill (Steps 1–7):
+   - Wait for the merge as above.
+   - **Strict sequential**: Do NOT start the next phase while the
+     current PR is open. Each must be fully merged first.
+6. `git pull origin <main-branch>`, then loop back for the next phase.
 
 **After the last phase is shipped and merged**, proceed to Completion.
 
@@ -166,16 +170,36 @@ the `mode: "implement-ship-all"` field in the state file). Specifically:
 ### 3. Completion
 
 When all phases are `MERGED`:
-- Print the final progress dashboard (all phases showing `MERGED`)
-- Mark `Ship` as `MERGED` in the plan's status table
-- Rename the plan file to denote completion: `plan-<name>.md` →
-  `plan-<name>-done.md` (use `git mv` if the file is tracked,
-  otherwise plain `mv`). Skip if the file is already named
-  `*-done.md` (monitor-pr may have renamed it first).
-- Congratulate the user — the feature is complete
-- Remind them of any deferred suggestions or follow-up items from
-  reviews across all phases
-- Print the workflow friction log (see below)
+
+1. **Final sync**: `git pull origin <main-branch>` to ensure local
+   main matches the remote after all merges.
+
+2. **Print** the final progress dashboard (all phases showing `MERGED`).
+
+3. **Update the plan**:
+   - Mark `Ship` as `MERGED` in the plan's status table.
+   - Rename the plan file to denote completion: `plan-<name>.md` →
+     `plan-<name>-done.md` (use `git mv` if the file is tracked,
+     otherwise plain `mv`). Skip if the file is already named
+     `*-done.md` (monitor-pr may have renamed it first).
+   - **Commit and push the rename** (use the resolved plan file path,
+     not a hardcoded directory):
+     `git add <plan-file-done-path> && git commit -m "mark plan complete" && git push origin <main-branch>`
+
+4. **Clean up remote branches**: Delete any feature branches created
+   during this run that still exist on origin:
+   ```
+   git fetch --prune origin
+   ```
+   Then for each branch created during the run that still exists
+   remotely: `git push origin --delete <branch>`. Also delete
+   corresponding local branches with `git branch -d <branch>` (use
+   `-D` as fallback — safe because the PRs were merged).
+
+5. Congratulate the user — the feature is complete.
+6. Remind them of any deferred suggestions or follow-up items from
+   reviews across all phases.
+7. Print the workflow friction log (see below).
 
 ## Workflow Friction Log
 
@@ -250,44 +274,36 @@ For autonomous operation without approval prompts, the project needs:
    The sandbox checks for this directory; without it, git and gh
    commands are blocked.
 
-2. **`.claude/settings.local.json`** with permissions and sandbox config:
+2. **`.claude/settings.local.json`** with permissions and sandbox
+   config. A baseline template is provided at
+   `../../shared-references/permissions-template.json`. Copy it and
+   add project-specific entries:
+   `cp <plugin-path>/shared-references/permissions-template.json .claude/settings.local.json`
 
-```json
-{
-  "permissions": {
-    "allow": [
-      "Bash(git:*)",
-      "Bash(gh:*)",
-      "Bash(npm test:*)",
-      "Bash(pytest:*)",
-      "Bash(pip:*)",
-      "Bash(which:*)",
-      "Bash(echo:*)",
-      "Bash(ls:*)",
-      "Read(*)",
-      "Write(*)",
-      "Edit(*)",
-      "Glob(*)",
-      "Grep(*)"
-    ]
-  },
-  "sandbox": {
-    "enabled": true,
-    "autoAllowBashIfSandboxed": true
-  }
-}
-```
+   Then add your project-specific patterns (test runners, linters,
+   language tools), e.g.:
+   ```
+   "Bash(pytest:*)",
+   "Bash(npm test:*)",
+   "Bash(cargo test:*)"
+   ```
 
-Adapt the test runner and language-specific patterns to the project
-(e.g., `Bash(cargo test:*)`, `Bash(python3:*)`,
-`Bash(KERAS_BACKEND=torch python3:*)`). `CronCreate`, `CronDelete`,
-`CronList`, and `Agent` do not require explicit permission entries.
+   `CronCreate`, `CronDelete`, `CronList`, and `Agent` do not
+   require explicit permission entries.
 
 The `sandbox` block is the key to zero-prompt autonomous runs:
-`enabled: true` restricts file writes to the project directory (safe
-for worktree-isolated work), and `autoAllowBashIfSandboxed: true`
-auto-approves bash commands within that sandbox. Without this combo,
-every git/gh command triggers a user approval prompt.
+- `enabled: true` restricts file writes to the project directory
+- `autoAllowBashIfSandboxed: true` auto-approves bash commands
+  within that sandbox
+- `excludedCommands: ["git", "gh"]` exempts git and gh from sandbox
+  restrictions — without this, the sandbox denies writes to `.git/`
+  internals and every git command falls back to
+  `dangerouslyDisableSandbox`
+
+Note: With `autoAllowBashIfSandboxed: true`, granular `Bash(git:*)`
+permission entries are redundant for sandboxed commands — they only
+matter if sandbox is disabled. They are included in the template as
+a fallback.
 
 If permissions are not configured, the skill still works but will
 pause for user approval on each tool call — defeating the purpose
@@ -297,9 +313,17 @@ and tells the user what to configure.
 ## Notes
 
 - Each phase goes through the full implement-ship cycle including all
-  quality gates (simplify, deep review, CI). No shortcuts.
-- Phases always branch from the latest main. After each phase merges,
-  pull main before starting the next phase.
+  quality gates (simplify, deep review, CI). No shortcuts — the
+  quality gate check in Step 2.3 enforces this.
+- **Default: batch phases into one PR**. Implement all remaining
+  phases in a single worktree and ship them as one PR. Only split
+  phases into separate PRs when a phase is large enough to warrant
+  independent review (substantial new feature, major refactor, or
+  100+ lines of non-trivial changes). When in doubt, batch.
+- **Strict sequential execution**: Each PR must be fully merged before
+  the next one begins. No parallel PRs, no pipelining.
+- Phases always branch from the latest main. After each PR merges,
+  pull main before starting the next.
 - If the user interrupts the loop, they can resume by invoking
   `/implement-ship-all` again — it reads the state file and plan
   status table to determine what's next.
@@ -308,3 +332,7 @@ and tells the user what to configure.
   substantive review disagreements, ambiguous merge conflicts). All
   "Proceed?" prompts in sub-skills are skipped. The user can interrupt
   at any time and resume later.
+- **User overrides**: If the user explicitly requests a different
+  shipping strategy (e.g., "combine all phases into one PR" or
+  "ship each phase separately"), acknowledge the quality gate
+  tradeoff and proceed with their preference.
