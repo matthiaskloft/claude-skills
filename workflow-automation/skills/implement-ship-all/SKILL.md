@@ -78,7 +78,7 @@ entries**, stop and print:
 >    `cp <plugin-path>/shared-references/permissions-template.json .claude/settings.local.json`
 >
 >    Then add your project-specific patterns, e.g.:
->    ```
+>    ```json
 >    "Bash(pytest:*)",
 >    "Bash(KERAS_BACKEND=torch pytest:*)",
 >    "Bash(npm test:*)"
@@ -188,7 +188,7 @@ When all phases are `MERGED`:
 
 4. **Clean up remote branches**: Delete any feature branches created
    during this run that still exist on origin:
-   ```
+   ```bash
    git fetch --prune origin
    ```
    Then for each branch created during the run that still exists
@@ -282,7 +282,7 @@ For autonomous operation without approval prompts, the project needs:
 
    Then add your project-specific patterns (test runners, linters,
    language tools), e.g.:
-   ```
+   ```json
    "Bash(pytest:*)",
    "Bash(npm test:*)",
    "Bash(cargo test:*)"

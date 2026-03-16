@@ -1,4 +1,5 @@
 {
+  "_comment": "Maximum-privilege baseline for autonomous workflow operation. Read/Write/Edit wildcards grant unrestricted file access within the sandbox. Narrow these for less-privileged projects (e.g., Write(src/**)).",
   "permissions": {
     "allow": [
       "Bash(git:*)",
