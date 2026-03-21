@@ -1,0 +1,5 @@
+{
+  "enabledPlugins": {
+    "workflow-automation@matthiaskloft-claude-skills": true
+  }
+}

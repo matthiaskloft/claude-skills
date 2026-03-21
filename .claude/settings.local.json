@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git branch:*)",
+      "Bash(gh pr:*)",
+      "Bash(gh api:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git checkout:*)",
+      "Bash(git stash:*)",
+      "Bash(git cherry-pick:*)",
+      "Bash(git push:*)",
+      "Bash(claude plugins:*)",
+      "Bash(git remote:*)",
+      "WebFetch(domain:api.github.com)",
+      "Bash(git fetch:*)",
+      "WebFetch(domain:github.com)"
+    ]
+  },
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true
+  }
+}
