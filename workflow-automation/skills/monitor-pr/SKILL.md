@@ -12,7 +12,7 @@ description: >
 # Monitor PR — Background CI Monitoring and Auto-Merge
 
 You are setting up background monitoring for a pull request. Once started,
-a cron job checks CI status every 4 minutes and takes autonomous action:
+a cron job checks CI status every 5 minutes and takes autonomous action:
 fixing failures, responding to simple review feedback, and merging when
 all checks pass.
 
@@ -89,7 +89,7 @@ Before creating the cron job:
 ### 4. Create the Monitoring Cron Job
 
 Use **CronCreate** with:
-- **cron**: `"*/4 * * * *"` (every 4 minutes)
+- **cron**: `"*/5 * * * *"` (every 5 minutes)
 - **recurring**: `true`
 - **prompt**: The monitoring prompt from the Cron Prompt section below,
   with all placeholders replaced with actual values.

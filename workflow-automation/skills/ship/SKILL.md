@@ -123,7 +123,7 @@ Do not ship broken code.
 Delegate CI monitoring and auto-merge to the **monitor-pr** skill:
 
 - Invoke `/monitor-pr` with the PR number from Step 3.
-- monitor-pr sets up a background cron job (every ~4 min) that checks
+- monitor-pr sets up a background cron job (every ~5 min) that checks
   CI, fixes failures, and auto-merges when ready.
 - It also handles post-merge cleanup (worktree removal, branch
   deletion, pulling latest main).
