@@ -15,7 +15,7 @@
 | Phase 5: TDD enforcement | SKIPPED | 2026-03-21 | User decision: current test guidance sufficient |
 | Phase 6: Anthropic agent catalog + soft model guidance | IMPLEMENTED | 2026-03-21 | |
 | Phase 7: Brainstorm skill (spec doc output) | IMPLEMENTED | 2026-03-21 | |
-| Ship | TODO | | |
+| Ship | MERGED | 2026-03-21 | Pushed to master: 7fb9b74 |
 
 ## Summary
 
