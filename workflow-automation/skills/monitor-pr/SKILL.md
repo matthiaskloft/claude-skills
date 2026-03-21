@@ -226,7 +226,7 @@ Check the status of PR #{pr_number} (branch: {branch}) and take action:
       - If no actionable comments remain (all non-actionable or empty): proceed to merge.
 
    b. Merge:
-      gh pr merge {pr_number} {merge_strategy} --delete-branch
+      gh pr merge {pr_number} {merge_strategy}
    - On success: cancel this cron job (CronDelete job {cron_job_id}). Say "PR #{pr_number} merged successfully."
      Then clean up:
      c. Ensure CWD is the main repo root (not inside a worktree): get the main worktree path from git worktree list (the first entry is always the main worktree) and cd there. Do NOT use git rev-parse --show-toplevel — it returns the current worktree's root, not the main repo's.
@@ -257,6 +257,10 @@ Check the status of PR #{pr_number} (branch: {branch}) and take action:
 - **Protected branches**: If merge fails due to branch protection
   rules the monitor can't satisfy, inform the user and continue
   monitoring.
+- **Worktree blocks branch deletion**: Never use `--delete-branch`
+  with `gh pr merge` when a worktree exists on the feature branch.
+  The cleanup step (5.c) handles branch deletion after worktree
+  removal.
 - **Bot reviewers post comments without setting reviewDecision**: The
   cron prompt fetches and triages inline review comments (step 5a)
   before every merge attempt. This catches CodeRabbit, Copilot, and

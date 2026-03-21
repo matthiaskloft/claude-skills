@@ -61,7 +61,9 @@ output — exit code, pass/fail counts. Do not rely on "tests passed
 during implementation" — that was a different context. Run the build
 command if applicable and verify exit 0. If you cannot produce fresh
 test output showing 0 failures, do not proceed to Step 2. Fix the
-issues first.
+issues first. On WSL2, prefix test commands with
+`TMPDIR=/tmp/claude-1000` to avoid temp-file path issues (e.g.,
+`TMPDIR=/tmp/claude-1000 pytest`).
 
 **Plan status check** (always, regardless of mode):
 - If a plan document exists, verify the current phase is marked

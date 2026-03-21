@@ -250,6 +250,10 @@ phase).
   a worktree may fail with "Read-only file system" on the index.lock.
   Retry the same command — it typically succeeds on the second attempt.
   Do not treat this as a fatal error.
+- **pytest temp-file failures in worktrees**: On WSL2, pytest may fail
+  with permission or path errors on temporary files. Prefix test commands
+  with `TMPDIR=/tmp/claude-1000` (e.g., `TMPDIR=/tmp/claude-1000 pytest`)
+  to ensure temp files land in a sandbox-writable location.
 
 ## Common Mistakes
 
