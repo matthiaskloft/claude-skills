@@ -152,14 +152,17 @@ The **monitor-pr** skill handles cleanup. Verify it completed:
 
 ### 6. Update the Plan
 
-The **monitor-pr** skill updates the plan to `MERGED` at merge time.
-Verify this was done. If not (e.g., monitor-pr was interrupted):
-- Mark the phase as `MERGED` in the status table
-- Add the PR URL to the phase's Notes column or near the phase heading
-- Record any deviations, follow-up items, or issues discovered during
-  shipping
-- If no plan document exists, ask the user if they want to track the
-  shipped work anywhere.
+After the PR is merged, **always** update the plan file — do not assume
+monitor-pr already did this:
+1. Read the plan file and check the status table for the current phase
+2. If the phase is not already `MERGED`:
+   - Mark the phase as `MERGED` in the status table
+   - Add the PR URL/number to the phase's Notes column
+3. Record any deviations, follow-up items, or issues discovered during
+   shipping
+4. Commit and push the plan update (can be a separate commit on main)
+5. If no plan document exists, ask the user if they want to track the
+   shipped work anywhere.
 
 ### 7. Propose Next Steps
 
