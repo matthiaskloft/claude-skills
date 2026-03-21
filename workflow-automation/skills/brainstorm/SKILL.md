@@ -30,7 +30,29 @@ Before asking questions, understand the landscape:
 - Check recent commits for ongoing work that might relate
 - Identify the language/framework and its conventions
 
-### 2. Ask Clarifying Questions
+### 2. Present the Decision Landscape
+
+Before diving into questions, give the user a concise overview of what
+you found and what needs to be decided. Output a short message (not a
+tool call) covering:
+
+- **Context summary**: What exists today — relevant code, patterns,
+  and constraints you discovered in Step 1 (2-4 bullet points)
+- **Key decisions ahead**: The major design questions this brainstorm
+  will need to resolve, presented as a numbered list (typically 3-6
+  items). Each item should be a concrete question, not a vague topic.
+  Examples: "Where should the new endpoint live — extend the existing
+  controller or create a new one?", "Which serialization format —
+  JSON, Protobuf, or both?"
+- **Rough flow**: A one-sentence note on the order you plan to tackle
+  these decisions (e.g., "I'll start with scope and requirements, then
+  move to architecture choices")
+
+This gives the user a mental map of the brainstorm before the first
+question arrives. Keep it brief — aim for 8-15 lines total. Do not
+use AskUserQuestion for this step; just present the overview as text.
+
+### 3. Ask Clarifying Questions
 
 Use **AskUserQuestion** as the default interaction tool — one question
 at a time, prefer multiple choice with descriptions.
@@ -48,7 +70,7 @@ Key principles:
 - If the user's answer raises new questions, ask those before moving on
 - Be willing to go back and revisit earlier answers
 
-### 3. Propose Approaches
+### 4. Propose Approaches
 
 When you understand the problem well enough, propose 2-3 approaches
 using AskUserQuestion:
@@ -59,7 +81,7 @@ using AskUserQuestion:
   text
 - Include enough detail that the user can make an informed choice
 
-### 4. Refine the Design
+### 5. Refine the Design
 
 Iterate on the chosen approach:
 - Refine scope — what's in, what's out
@@ -68,7 +90,7 @@ Iterate on the chosen approach:
 - Continue using AskUserQuestion for decisions
 - Apply YAGNI ruthlessly — remove unnecessary features from the design
 
-### 5. Write the Spec
+### 6. Write the Spec
 
 Write the Spec section into a plan document:
 
@@ -93,12 +115,10 @@ Write the Spec section into a plan document:
 - Constraints (performance, compatibility, dependencies)
 - Open questions (anything unresolved)
 
-### 6. Review the Spec (Default)
+### 7. Review the Spec
 
-Review the spec in a loop until no new issues are found. This step
-runs by default — do not ask the user whether to review.
-
-**Review loop:**
+Run one automatic review after writing the spec — do not ask the user
+whether to review.
 
 1. Spawn a review agent using the Agent tool
    (`subagent_type="feature-dev:code-architect"`) with this focus prompt:
@@ -126,27 +146,14 @@ runs by default — do not ask the user whether to review.
      otherwise note it in the Open Questions section
    - **Suggestions**: Include in the Review Feedback section
 
-3. If any revisions were made in step 2, repeat the review loop: re-run
-   step 1 on the updated spec. Prepend the reviewer prompt with: "This
-   is iteration N. Changes since last review: [list the specific
-   sections revised and what changed]."
-
-4. Stop when **no revisions were made in step 2** — all blockers
-   addressed, warnings handled, only suggestions remain.
-
-5. Mark `Spec` as `DONE` in the status table. Record the iteration
-   count in the Review Feedback section (e.g., "Spec reviewed in 2
-   iterations").
-
-**Guard rail**: Cap at 3 total review iterations. If the 3rd review
-still has blockers, present the spec with unresolved issues flagged
-and ask the user for guidance.
+3. After all blocker revisions are applied, mark `Spec` as `DONE` in
+   the status table.
 
 **Fallback**: If the Agent tool is unavailable, note in the Review
 Feedback section that the spec was not independently reviewed and
 present it directly.
 
-### 7. Hand Off
+### 8. Hand Off
 
 Ask the user via AskUserQuestion whether to proceed:
 
