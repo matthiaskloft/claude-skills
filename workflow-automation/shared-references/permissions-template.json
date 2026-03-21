@@ -3,6 +3,9 @@
   "permissions": {
     "allow": [
       "Bash(git:*)",
+	  "Bash(git fetch:*)",
+	  "WebFetch(domain:api.github.com)",      
+      "WebFetch(domain:github.com)",
       "Bash(gh:*)",
       "Bash(which:*)",
       "Bash(echo:*)",
@@ -14,7 +17,7 @@
       "Write(*)",
       "Edit(*)",
       "Glob(*)",
-      "Grep(*)"
+      "Grep(*)"	  
     ]
   },
   "sandbox": {
