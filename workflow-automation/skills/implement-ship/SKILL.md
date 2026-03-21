@@ -46,7 +46,7 @@ Before proceeding to ship, verify that implementation succeeded:
 - If the phase is marked `IMPLEMENTED`, proceed to ship.
 - If the phase is marked `IMPLEMENTED_WITH_CONCERNS`, surface the
   concerns to the user and ask whether to proceed. In autonomous mode
-  (detected via `mode: "implement-ship-all"` in the state file), log
+  (detected via `mode: "implement-ship-all"` or `mode: "plan-implement-ship"` in the state file), log
   the concerns in the plan's Notes and proceed to ship rather than
   pausing.
 - If the phase is `BLOCKED`, `NEEDS_INPUT`, `IN_PROGRESS`, or otherwise

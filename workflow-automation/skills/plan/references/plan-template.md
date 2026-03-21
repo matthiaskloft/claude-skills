@@ -7,36 +7,60 @@
 
 | Phase | Status | Date | Notes |
 |-------|--------|------|-------|
-| Plan | DONE | {DATE} | |
+| Spec | TODO | | |
+| Plan | TODO | | |
 | Phase 1: {PHASE_1_NAME} | TODO | | |
 | Ship | TODO | | |
 
-## Summary
+## Spec
+
+_Design decisions and requirements — the "what and why". Produced by
+brainstorming or written directly. Treat as settled once the Plan row
+is marked DONE._
+
+### Summary
 
 **Motivation**: Why is this feature needed?
 
 **Outcome**: What will the user be able to do after this is implemented?
 
-## Assumptions
+### Requirements
 
-_List assumptions about the system, user behavior, or constraints that
-are not documented elsewhere._
+_What the feature must do. Be specific and testable._
 
 -
 
-## Design Decisions
+### Design Decisions
 
 | Decision | Options | Chosen | Rationale |
 |----------|---------|--------|-----------|
 
 _Add a row for each major design decision._
 
-## Scope
+### Scope
 
-### In Scope
+#### In Scope
 -
 
-### Out of Scope
+#### Out of Scope
+-
+
+### Architecture Overview
+
+_Components, data flow, key interfaces. How the pieces fit together._
+
+### Constraints
+
+_Performance requirements, backwards compatibility, dependencies,
+deadlines, or other hard limits._
+
+-
+
+### Open Questions
+
+_Anything unresolved after the spec review. Remove items as they are
+resolved during planning or implementation._
+
 -
 
 ## Implementation Plan
@@ -73,4 +97,4 @@ _Living section — updated during implementation._
 
 ## Review Feedback
 
-_Populated by plan-reviewer agent._
+_Populated by review agents during spec and plan reviews._

@@ -25,7 +25,7 @@ offer to resume from the recorded step. If stale, delete it and start
 fresh.
 
 **Autonomous mode**: If the state file contains
-`mode: "implement-ship-all"`, skip all confirmation prompts:
+`mode: "implement-ship-all"` or `mode: "plan-implement-ship"`, skip all confirmation prompts:
 - Resume automatically from the recorded step without asking
   "Resume or start over?"
 - Step 2: Do not ask "Starting {phase}. Proceed?" — start immediately
@@ -228,7 +228,7 @@ After executing a phase (Step 3), assign one of these statuses:
   flagged doubts (e.g., approach may not scale, test coverage is
   uncertain, edge case handling is unclear). Concerns are surfaced to
   the user before shipping. In autonomous mode
-  (`mode: "implement-ship-all"`), log the concerns in the plan's Notes
+  (`mode: "implement-ship-all"` or `mode: "plan-implement-ship"`), log the concerns in the plan's Notes
   and proceed.
 - **`NEEDS_INPUT`** — blocked on a user decision (e.g., ambiguous
   requirement, design choice not covered by the plan). In autonomous
@@ -252,7 +252,7 @@ Stop fixing and escalate to the user when:
 - **You don't understand why something fails**: If you cannot explain
   the root cause, do not try random fixes. Ask for help.
 
-**In autonomous mode** (`mode: "implement-ship-all"`): mark the phase
+**In autonomous mode** (`mode: "implement-ship-all"` or `mode: "plan-implement-ship"`): mark the phase
 as `BLOCKED`, log what was tried and what failed in the plan's Notes
 section, and stop the loop. Do not silently continue to the next phase
 unless it is explicitly independent (no dependency on the blocked

@@ -23,8 +23,8 @@ their own state tracking via `.workflow-state.json`. The `mode` field
 is set to `"implement-ship-all"`.
 
 **On startup**: Check for `.workflow-state.json`. If found with
-`mode: "implement-ship-all"`, a previous session was running the
-loop. Read the plan's status table to determine phase statuses.
+`mode: "implement-ship-all"` or `mode: "plan-implement-ship"`, a
+previous session was running the loop. Read the plan's status table to determine phase statuses.
 Resume based on the state:
 - If `pr_number` is set, check the PR status. If merged, clear it
   and continue. If open, verify monitor-pr is active (re-create the

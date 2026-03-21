@@ -12,8 +12,9 @@ description: >
 
 # Plan Phase — Feature Design Document
 
-You are creating a **plan document** that captures the design decisions,
-scope, and implementation steps for a feature before any code is written.
+You are creating or completing a **plan document** that captures the
+design decisions, scope, and implementation steps for a feature before
+any code is written.
 
 ## When to Plan vs. Just Do It
 
@@ -32,22 +33,28 @@ Before writing anything, gather context:
 - Read CLAUDE.md for project conventions and dev doc locations
 - Read relevant existing code to understand the current architecture
 - Identify the language/framework and its conventions
-- Look for existing spec docs (`spec-*.md`) in the dev docs directory
-  and the project root. If a spec exists for the requested feature, use
-  it as the primary source for the plan's Summary, Design Decisions, and
-  Scope sections. Do not re-derive design decisions that the spec already
-  resolved — treat those as settled. Only ask clarifying questions about
-  implementation phasing, not about design choices already documented in
-  the spec.
+- **Check for an existing plan file** (`plan-*.md`, excluding
+  `plan-*-done.md`) in the dev docs `plans/` subfolder and project root.
+  If a plan file exists with a filled-in `## Spec` section (from
+  brainstorming), use it as the primary source for design decisions. Do
+  not re-derive design decisions that the spec already resolved — treat
+  those as settled. Only ask clarifying questions about implementation
+  phasing, not about design choices in the spec.
+- If no plan file or spec exists, look for standalone `spec-*.md` files
+  as a fallback. If found, import the spec content into a new plan file.
 - Ask clarifying questions if the scope is ambiguous
 - Identify constraints (backwards compatibility, performance, dependencies)
 
 For ambiguous or large-scope requests where the design approach is
 unclear, suggest using the **brainstorm** skill first to explore the
-problem space and produce a spec doc before committing to a plan.
+problem space and produce a spec before committing to a plan.
 
-### 2. Create the Plan Document
+### 2. Create or Complete the Plan Document
 
+**If a plan file already exists** (from brainstorm): Open it and add
+the implementation sections below the existing Spec section.
+
+**If no plan file exists**: Create a new one.
 - Check the project's CLAUDE.md for where development docs are stored
   (e.g., `dev/`, `docs/dev/`, `docs/`). Place the plan in a `plans/`
   subfolder there, creating it if needed.
@@ -59,6 +66,11 @@ problem space and produce a spec doc before committing to a plan.
 - Use the template in `references/plan-template.md`
 - For a filled-in example, see `references/plan-example.md`
 - Fill in every section — leave nothing as placeholder text
+
+**If creating both Spec and Plan from scratch** (no brainstorm): Fill
+in the full Spec section (Summary, Requirements, Design Decisions,
+Scope, Architecture Overview, Constraints, Open Questions) and mark
+`Spec` as `DONE` in the status table.
 
 Key sections to get right:
 - **Summary**: One paragraph on motivation + outcome. Be specific.
@@ -119,8 +131,8 @@ Review the plan in a loop until no new issues are found:
    requiring changes, and only suggestions (or no findings) remain.
 
 5. Record the iteration count in the plan's "Review Feedback" section
-   (e.g., "Reviewed in 2 iterations") so the user can gauge how contested
-   the plan was.
+   (e.g., "Plan reviewed in 2 iterations") so the user can gauge how
+   contested the plan was.
 
 **Guard rail**: Cap the loop at 4 total review iterations. If the 4th
 review still returns blockers that would require more revisions, stop
@@ -140,21 +152,18 @@ implementation. Highlight:
 
 ### 5. Track Status
 
-Every plan has a status table at the top:
-
-| Phase | Status | Date | Notes |
-|-------|--------|------|-------|
-| Plan | DONE | 2026-03-10 | Approved |
-| Phase 1: Core | TODO | | |
-| Phase 2: Extensions | TODO | | |
-| Ship | TODO | | |
+Update the status table:
+- Mark `Spec` as `DONE` (if not already from brainstorm)
+- Mark `Plan` as `DONE`
 
 Statuses: `TODO`, `IN_PROGRESS`, `DONE`, `IMPLEMENTED`, `COMMITTED`, `MERGED`, `SKIPPED`
 
 ## After Planning
 
-Once approved, the user can proceed with the **implement** skill to build
-the feature from the plan, or implement it directly in the current session.
+Once approved, the user can proceed with:
+- **`/implement`** — build the feature phase by phase
+- **`/implement-ship`** — implement and ship a single phase
+- **`/implement-ship-all`** — implement and ship all phases autonomously
 
 ## Common Mistakes
 
@@ -166,6 +175,7 @@ the feature from the plan, or implement it directly in the current session.
   should be part of each phase, not a separate phase
 - Phases with hidden dependencies: Phase 2 assumes Phase 1 created a helper
   function but doesn't say so — each phase must list what it depends on
+- Re-deriving design decisions that the Spec section already resolved
 
 ## Handling Edge Cases
 
@@ -179,3 +189,6 @@ the feature from the plan, or implement it directly in the current session.
 - **Ambiguous request**: If the user says "just plan it" without answering
   clarifying questions, make reasonable assumptions and document them
   explicitly in the plan's Notes section.
+- **Spec needs changes**: If during planning you discover the Spec section
+  needs updates (e.g., a design decision doesn't work for implementation),
+  update the Spec section and note the change in Review Feedback.

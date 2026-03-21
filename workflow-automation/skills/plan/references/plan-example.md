@@ -7,12 +7,15 @@
 
 | Phase | Status | Date | Notes |
 |-------|--------|------|-------|
+| Spec | DONE | 2026-03-10 | Reviewed in 2 iterations |
 | Plan | DONE | 2026-03-10 | Approved |
 | Phase 1: Core export | TODO | | |
 | Phase 2: CLI integration | TODO | | |
 | Ship | TODO | | |
 
-## Summary
+## Spec
+
+### Summary
 
 **Motivation**: Users currently have to manually copy pipeline results from
 the console. They need a way to export processed data to CSV files for use
@@ -21,14 +24,14 @@ in spreadsheets and downstream tools.
 **Outcome**: Users can call `pipeline.export("output.csv")` or pass
 `--export csv` on the command line to write results directly to a file.
 
-## Assumptions
+### Requirements
 
-- The pipeline's output is always a tabular structure (rows + columns)
-- CSV is sufficient for the first version; other formats (Parquet, JSON)
-  can be added later
-- File paths are provided by the user, not auto-generated
+- Export pipeline output to CSV with configurable delimiter
+- Support both programmatic API (`Pipeline.export()`) and CLI (`--export`)
+- Error when target file already exists (safe default)
+- Include header row from column names
 
-## Design Decisions
+### Design Decisions
 
 | Decision | Options | Chosen | Rationale |
 |----------|---------|--------|-----------|
@@ -36,20 +39,34 @@ in spreadsheets and downstream tools.
 | CSV library | Built-in csv module vs. pandas | Built-in csv | No new dependency; pipeline output is simple enough |
 | Overwrite behavior | Error if exists vs. overwrite vs. prompt | Error if exists | Safest default; user can delete manually |
 
-_Add a row for each major design decision._
+### Scope
 
-## Scope
-
-### In Scope
+#### In Scope
 - `Pipeline.export(path, delimiter=",")` method
 - `--export` CLI flag with path argument
 - Header row from column names
 - Error on existing file
 
-### Out of Scope
+#### Out of Scope
 - Other formats (Parquet, JSON, Excel)
 - Streaming export for large datasets
 - Auto-generated filenames
+
+### Architecture Overview
+
+The export is a thin layer: `Pipeline.export()` delegates to a pure
+function `write_csv(rows, columns, path, delimiter)` in `src/export.py`.
+The CLI wires `--export` to call `pipeline.export()` after execution.
+
+### Constraints
+
+- No new external dependencies
+- Pipeline output is always tabular (rows + columns)
+- File paths are user-provided, not auto-generated
+
+### Open Questions
+
+- None remaining after spec review
 
 ## Implementation Plan
 
@@ -101,4 +118,5 @@ _Living section — updated during implementation._
 
 ## Review Feedback
 
-_Populated by plan-reviewer agent._
+Spec reviewed in 2 iterations.
+Plan reviewed in 1 iteration.
