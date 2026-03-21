@@ -32,8 +32,19 @@ Before writing anything, gather context:
 - Read CLAUDE.md for project conventions and dev doc locations
 - Read relevant existing code to understand the current architecture
 - Identify the language/framework and its conventions
+- Look for existing spec docs (`spec-*.md`) in the dev docs directory
+  and the project root. If a spec exists for the requested feature, use
+  it as the primary source for the plan's Summary, Design Decisions, and
+  Scope sections. Do not re-derive design decisions that the spec already
+  resolved — treat those as settled. Only ask clarifying questions about
+  implementation phasing, not about design choices already documented in
+  the spec.
 - Ask clarifying questions if the scope is ambiguous
 - Identify constraints (backwards compatibility, performance, dependencies)
+
+For ambiguous or large-scope requests where the design approach is
+unclear, suggest using the **brainstorm** skill first to explore the
+problem space and produce a spec doc before committing to a plan.
 
 ### 2. Create the Plan Document
 
@@ -70,19 +81,28 @@ Review the plan in a loop until no new issues are found:
 
 **Review loop:**
 
-1. Spawn a review agent using the Agent tool (`subagent_type=Explore`) with
-   this prompt: "Review this feature plan for feasibility, gaps, risks, and
-   scope issues. Verify that any enum values, parameter names, and
-   framework-specific constants mentioned in the plan match actual codebase
-   definitions — cross-check against validators and class constructors.
+1. Spawn a review agent using the Agent tool
+   (`subagent_type="feature-dev:code-architect"`) with this focus prompt:
+   "Review this feature plan against the existing codebase. Verify:
+   (1) feasibility — do the referenced files, APIs, and patterns exist,
+   (2) gaps — are there missing phases, dependencies, or edge cases,
+   (3) risks — could any phase break existing functionality,
+   (4) scope — is each phase independently shippable.
+   Cross-check any enum values, parameter names, and framework-specific
+   constants mentioned in the plan against actual codebase definitions —
+   verify against validators and class constructors.
    For each finding, state severity (blocker/warning/suggestion)
    and a concrete recommendation. End with: Review complete: X findings
    (Y blockers, Z warnings)."
+   Use the default model — architectural reasoning requires deep context.
    - Pass the plan document and any relevant source files the plan references
    - Wait for the reviewer to return
 
 2. Handle feedback:
-   - **Blockers**: Revise the plan to address every blocker
+   - **Blockers**: Revise the plan to address every blocker. If a blocker
+     requires a user decision (e.g., ambiguous scope, conflicting
+     constraints), use AskUserQuestion to present the options with
+     descriptions rather than plain text questions.
    - **Warnings**: Evaluate each warning — revise the plan if warranted,
      otherwise note it in the plan's "Review Feedback" section
    - **Suggestions**: Include in the plan's "Review Feedback" section for

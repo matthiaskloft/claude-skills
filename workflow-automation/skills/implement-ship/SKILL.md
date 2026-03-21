@@ -28,10 +28,14 @@ flow.
 
 ### 1. Implement
 
-Follow the **implement** skill's Steps 1–7:
+Before delegating, write `.workflow-state.json` with
+`mode: "implement-ship"` and `skill: "implement-ship"`. This makes the
+mode detectable by the ship skill's verification skip condition.
+
+Then follow the **implement** skill's Steps 1–7:
 load the plan, select the phase, execute, simplify, review, update docs,
-and mark the phase as `IMPLEMENTED`. Skip Step 8 (Next Steps) — this
-skill handles the transition to shipping directly.
+and mark the phase with its execution status. Skip Step 8 (Next Steps)
+— this skill handles the transition to shipping directly.
 
 Do not skip any implement steps — the quality gates (simplify, deep
 review loop) must run before shipping.
@@ -40,8 +44,13 @@ review loop) must run before shipping.
 
 Before proceeding to ship, verify that implementation succeeded:
 - If the phase is marked `IMPLEMENTED`, proceed to ship.
-- If the phase is `BLOCKED`, `IN_PROGRESS`, or otherwise incomplete,
-  stop and ask the user:
+- If the phase is marked `IMPLEMENTED_WITH_CONCERNS`, surface the
+  concerns to the user and ask whether to proceed. In autonomous mode
+  (detected via `mode: "implement-ship-all"` in the state file), log
+  the concerns in the plan's Notes and proceed to ship rather than
+  pausing.
+- If the phase is `BLOCKED`, `NEEDS_INPUT`, `IN_PROGRESS`, or otherwise
+  incomplete, stop and ask the user:
   1. **Clean up** — delete the worktree (`git worktree remove ...`)
      and branch (`git branch -D ...`)
   2. **Keep for later** — leave the worktree intact; ship with `/ship`

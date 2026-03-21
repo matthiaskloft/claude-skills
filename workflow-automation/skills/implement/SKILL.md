@@ -94,45 +94,100 @@ this phase. If the file is not listed, stop and ask the user: add it to
 the current phase, defer it to a future phase, or document it in the
 project's dev docs todo file and continue.
 
+After execution, determine the phase status (see Phase Execution
+Statuses below). If the status is not `IMPLEMENTED`, handle according
+to the protocol before proceeding.
+
 ### 4. Simplify
 
-Run a simplification pass on the changed code to clean up over-engineering,
-unnecessary abstractions, and code style issues before review. Use a
-dedicated simplify skill if one is available in the user's system. If not,
-spawn an independent agent to review the changed code for unnecessary
-complexity, dead code, and style inconsistencies, and apply the fixes.
+Run a simplification pass on the changed code to clean up
+over-engineering, unnecessary abstractions, and code style issues before
+review. Spawn an agent using the Agent tool
+(`subagent_type="code-simplifier:code-simplifier"`) targeting the files
+modified in this phase.
 
-### 5. Deep Review Loop
+If this agent type is unavailable, fall back to a general-purpose agent
+with instructions to simplify the changed code for clarity and
+maintainability.
 
-Run a comprehensive code review cycle until the code is clean:
+### 5. Review Loop
 
-1. Check if a dedicated code review skill or agent is available. Prefer
-   one that reviews against the broader codebase (not just the diff in
-   isolation), checks for redundancies with existing code, and returns
-   structured findings with severity levels. If none is available, spawn
-   an independent review agent (`subagent_type=Explore`) with this prompt:
-   "Review the following changed files against the broader codebase.
-   Check for: (1) plan compliance — were all planned steps addressed,
-   (2) redundancies — does new code duplicate existing utilities,
-   (3) correctness — edge cases, return value contracts, error handling,
-   (4) security — injection, path traversal, credential exposure,
-   (5) coherence — do changes break callers or violate conventions,
-   (6) pattern consistency — does new code replicate the architectural
-   patterns (wrappers, factories, registration, naming) established in
-   the same file or module, rather than introducing a different style.
-   For each finding, state severity (blocker/warning/suggestion) and a
-   concrete fix. End with: Review complete: X findings."
-   Pass the plan document, changed files, and relevant surrounding code.
+Run a two-stage code review cycle until the code is clean.
 
-2. If the review reports findings: fix them and run the review again.
+**Stage 1 — Spec compliance** (mandatory, runs first):
 
-3. Repeat until no fixes were needed — i.e., zero blockers or warnings
-   remain. Suggestions may be deferred — document them in the plan's Notes
-   section and continue.
+Spawn an agent (`subagent_type="feature-dev:code-reviewer"`) with the
+plan document and changed files. Focus prompt: "Verify that the
+implementation matches the plan for this phase. Check: (1) all planned
+steps were addressed, (2) no over-building beyond the plan's scope,
+(3) pattern consistency — new code replicates the architectural patterns
+established in the same file or module. For each finding, state severity
+(blocker/warning/suggestion) and a concrete fix."
 
-   Cap at 4 total review iterations. If the 4th review still returns
-   blockers or warnings that require fixes, stop and inform the user
-   rather than starting another fix/review cycle.
+Fix any blockers or warnings, then re-run Stage 1. Cap at 2 iterations
+— if spec compliance still has blockers after 2 rounds, stop and inform
+the user.
+
+**Stage 2 — Code quality** (only after Stage 1 passes):
+
+Spawn three agents in parallel:
+- `subagent_type="pr-review-toolkit:code-reviewer"` — project guidelines
+  and CLAUDE.md conventions
+- `subagent_type="pr-review-toolkit:silent-failure-hunter"` — error
+  handling, swallowed exceptions, inappropriate fallback behavior
+- `subagent_type="pr-review-toolkit:pr-test-analyzer"` — test coverage
+  quality and critical gaps
+
+Collect findings from all three. Fix blockers and warnings, then re-run
+Stage 2. Cap at 3 iterations — if the 3rd iteration still has blockers,
+stop and inform the user. Suggestions may be deferred — document them
+in the plan's Notes section.
+
+**Fallback**: If any agent type is unavailable, fall back to a
+general-purpose agent with the same focus prompt.
+
+## Available Anthropic Agents
+
+This catalog covers agents available to the workflow automation skills.
+The plan skill uses `feature-dev:code-architect` for plan review — see
+plan/SKILL.md Step 3 for that agent's role.
+
+**Review agents:**
+- `feature-dev:code-reviewer` — bugs, logic errors, security
+  vulnerabilities, code quality (confidence-filtered)
+- `pr-review-toolkit:code-reviewer` — project guidelines, CLAUDE.md
+  conventions, style guides
+- `pr-review-toolkit:silent-failure-hunter` — error handling, swallowed
+  exceptions, inappropriate fallback behavior
+- `pr-review-toolkit:pr-test-analyzer` — test coverage quality and gaps
+- `pr-review-toolkit:comment-analyzer` — comment accuracy and
+  completeness
+- `pr-review-toolkit:type-design-analyzer` — type design, encapsulation,
+  invariant expression
+
+**Implementation agents:**
+- `code-simplifier:code-simplifier` — simplify code for clarity and
+  maintainability
+- `feature-dev:code-architect` — design architectures from existing
+  codebase patterns
+- `feature-dev:code-explorer` — trace execution paths, map architecture,
+  understand dependencies
+
+**Exploration agents:**
+- `Explore` — fast codebase search (general purpose only; do NOT use
+  for code review or simplification — use the dedicated agents above)
+- `Plan` — implementation strategy design
+
+## Model Selection Guidance
+
+Consider using `model: "sonnet"` for mechanical, focused tasks
+(simplification, pattern-matching against guidelines, scanning for
+specific error patterns). Use the default model for tasks requiring
+deep reasoning (spec compliance review, architectural analysis, complex
+multi-file changes).
+
+These are suggestions, not rules. The user can override via CLAUDE.md
+preferences.
 
 ### 6. Update Documentation
 
@@ -146,9 +201,13 @@ Run a comprehensive code review cycle until the code is clean:
 
 ### 7. Update the Plan
 
-- Mark the phase as `IMPLEMENTED`: update the status table if the plan has
-  one, otherwise add a note at an appropriate place in the plan (e.g.,
-  inline next to the phase heading or in a Notes section).
+- Mark the phase with its execution status (see Phase Execution Statuses):
+  update the status table if the plan has one, otherwise add a note at an
+  appropriate place in the plan (e.g., inline next to the phase heading
+  or in a Notes section).
+- If the status is `IMPLEMENTED_WITH_CONCERNS`, record the concerns in
+  the plan's Notes section so they are visible to the ship skill and
+  the user.
 - Document what happened: key implementation decisions, deviations from
   the plan, and blockers or issues discovered for future phases. Place
   this in the plan's Notes section if one exists, or add it near the
@@ -159,6 +218,45 @@ Run a comprehensive code review cycle until the code is clean:
 After completing a phase, suggest using the **ship** skill to commit,
 PR, and merge the phase. The ship skill will propose the next phase
 after shipping is complete.
+
+## Phase Execution Statuses
+
+After executing a phase (Step 3), assign one of these statuses:
+
+- **`IMPLEMENTED`** — phase complete, all tests pass, ready to ship.
+- **`IMPLEMENTED_WITH_CONCERNS`** — complete and tests pass, but with
+  flagged doubts (e.g., approach may not scale, test coverage is
+  uncertain, edge case handling is unclear). Concerns are surfaced to
+  the user before shipping. In autonomous mode
+  (`mode: "implement-ship-all"`), log the concerns in the plan's Notes
+  and proceed.
+- **`NEEDS_INPUT`** — blocked on a user decision (e.g., ambiguous
+  requirement, design choice not covered by the plan). In autonomous
+  mode: log the question in the plan's Notes, mark the phase `BLOCKED`,
+  and move to the next phase if it is independent; otherwise stop the
+  loop.
+- **`BLOCKED`** — cannot proceed due to a technical issue (missing
+  dependency, unresolvable test failure, infrastructure problem).
+  Triggers the stop-and-escalate protocol (see When to Stop and
+  Escalate).
+
+## When to Stop and Escalate
+
+Stop fixing and escalate to the user when:
+
+- **Blocker hit**: A missing dependency, unexpected test failure, or
+  unclear instruction prevents progress. Do not guess — ask.
+- **3+ fix attempts on the same issue**: Do not attempt fix #4. The
+  pattern of repeated failures indicates the approach is wrong, not
+  that the fix is almost right. Step back and question the approach.
+- **You don't understand why something fails**: If you cannot explain
+  the root cause, do not try random fixes. Ask for help.
+
+**In autonomous mode** (`mode: "implement-ship-all"`): mark the phase
+as `BLOCKED`, log what was tried and what failed in the plan's Notes
+section, and stop the loop. Do not silently continue to the next phase
+unless it is explicitly independent (no dependency on the blocked
+phase).
 
 ## Branching
 
@@ -178,9 +276,11 @@ after shipping is complete.
   the discrepancies and adjust. Update the plan document to reflect
   reality.
 - **Tests fail unexpectedly**: Fix the issue if it's within the phase's
-  scope. If it's a pre-existing problem, document it in Notes and continue.
-- **Blocked by a dependency**: Note the blocker in the plan, mark the
-  phase as `BLOCKED`, and ask the user how to proceed.
+  scope. If it's a pre-existing problem, document it in Notes and
+  continue. If fixes fail repeatedly, follow the stop-and-escalate
+  protocol (see When to Stop and Escalate).
+- **Blocked by a dependency**: See Phase Execution Statuses — mark the
+  phase as `BLOCKED` or `NEEDS_INPUT` and follow the protocol there.
 - **WSL git index lock**: On WSL2, the first `git add` or `git mv` in
   a worktree may fail with "Read-only file system" on the index.lock.
   Retry the same command — it typically succeeds on the second attempt.

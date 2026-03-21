@@ -45,17 +45,36 @@ successful merge.
 ### 1. Verify Readiness
 
 Before shipping, confirm the phase is ready:
-- Check that tests pass by running the project's test command (infer from
-  CLAUDE.md, CI config, or common conventions like `npm test`, `pytest`,
-  `cargo test`, `devtools::test()`, etc.)
-- Check that the project builds or compiles cleanly if applicable
+
+**Read state file**: At the start of this step, read `.workflow-state.json`
+if it exists and extract the `mode` field.
+
+**If `mode` is `"implement-ship"` or `"implement-ship-all"`** (ship is
+part of a combined flow): skip the fresh test/build verification —
+implement just ran tests moments ago in the same session. Still check
+plan status below.
+
+**Otherwise (standalone ship)**: Run the project's test command (infer
+from CLAUDE.md, CI config, or common conventions like `npm test`,
+`pytest`, `cargo test`, `devtools::test()`, etc.) and read the full
+output — exit code, pass/fail counts. Do not rely on "tests passed
+during implementation" — that was a different context. Run the build
+command if applicable and verify exit 0. If you cannot produce fresh
+test output showing 0 failures, do not proceed to Step 2. Fix the
+issues first.
+
+**Plan status check** (always, regardless of mode):
 - If a plan document exists, verify the current phase is marked
-  `IMPLEMENTED` (not `IN_PROGRESS` or `TODO`). If it's still in progress,
-  ask the user whether to finalize it first or ship as-is.
+  `IMPLEMENTED` or `IMPLEMENTED_WITH_CONCERNS` (not `IN_PROGRESS` or
+  `TODO`). If it's still in progress, ask the user whether to finalize
+  it first or ship as-is.
+- If the phase is `IMPLEMENTED_WITH_CONCERNS`, surface the concerns to
+  the user and ask whether to proceed. In autonomous mode
+  (`mode: "implement-ship-all"`), log the concerns in the plan's Notes
+  and proceed — the implement skill already surfaced them.
 - Mark the `Ship` phase as `IN_PROGRESS` in the plan's status table (or
   add a note if no status table exists).
 
-If tests fail or the build is broken, fix the issues before proceeding.
 Do not ship broken code.
 
 ### 2. Stage and Commit

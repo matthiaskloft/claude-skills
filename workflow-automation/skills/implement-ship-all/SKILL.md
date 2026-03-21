@@ -128,9 +128,14 @@ major refactors, or 100+ lines of non-trivial changes.
    b. Mark the phase as `IMPLEMENTED` in the plan.
    c. Update the progress dashboard.
 5. **Quality gate check** (mandatory before shipping):
-   Run the implement skill's Step 4 (Simplify) and Step 5 (Deep
-   Review Loop) on the combined diff of all phases. Do NOT ship
-   code that has not been through both simplify and deep review.
+   Run the implement skill's Step 4 (Simplify via
+   `code-simplifier:code-simplifier`) and Step 5 (Review via
+   `feature-dev:code-reviewer` for spec compliance, then parallel
+   `pr-review-toolkit:code-reviewer`,
+   `pr-review-toolkit:silent-failure-hunter`, and
+   `pr-review-toolkit:pr-test-analyzer` for code quality) on the
+   combined diff of all phases. Do NOT ship code that has not been
+   through both simplify and review.
 6. **Ship** the batch using the **ship** skill (Steps 1–7):
    - The ship skill commits, pushes, creates the PR, and starts
      background monitoring via monitor-pr.
@@ -147,8 +152,12 @@ For each remaining `TODO` phase, in order:
 1. Print the progress dashboard.
 2. Pull the latest main: `git pull origin <main-branch>`.
 3. **Implement** the phase using the **implement** skill (Steps 1–7).
-4. **Quality gate check**: Verify Steps 4 (Simplify) and 5 (Deep
-   Review) were executed. If either was skipped, run them now.
+4. **Quality gate check**: Verify Steps 4 (Simplify via
+   `code-simplifier:code-simplifier`) and 5 (Review via
+   `feature-dev:code-reviewer`, `pr-review-toolkit:code-reviewer`,
+   `pr-review-toolkit:silent-failure-hunter`,
+   `pr-review-toolkit:pr-test-analyzer`) were executed. If either was
+   skipped, run them now.
 5. **Ship** the phase using the **ship** skill (Steps 1–7):
    - Wait for the merge as above.
    - **Strict sequential**: Do NOT start the next phase while the
