@@ -41,7 +41,7 @@ Add it to `.gitignore` to avoid committing it.
 | `worktree` | string \| null | Worktree path, or null if using a regular branch |
 | `pr_number` | number \| null | PR number if created, otherwise null |
 | `monitor_cron_id` | string \| null | CronCreate job ID if monitoring is active |
-| `mode` | string | `single` (one phase), `implement-ship`, or `implement-ship-all` |
+| `mode` | string | `single` (one phase), `implement-ship`, `implement-ship-all`, or `plan-implement-ship` (autonomous, same behavior as `implement-ship-all`) |
 | `last_updated` | string | ISO 8601 timestamp |
 
 ## Read Protocol (all skills)

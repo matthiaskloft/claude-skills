@@ -85,6 +85,8 @@ Do not ship broken code.
   changes.
 - Do NOT stage files that likely contain secrets (`.env`, credentials,
   API keys, tokens). Warn the user if such files are in the working tree.
+- Do NOT stage `.workflow-state.json` — it is local workflow state, not
+  project content.
 - Write a clear commit message:
   - First line: concise summary of what the phase accomplished (under 72 chars)
   - Body: brief explanation of key changes if the diff is non-trivial

@@ -110,9 +110,15 @@ tightly coupled and per-phase PRs create unnecessary overhead.
 Implement all remaining `TODO` phases sequentially in a single
 worktree, then ship once.
 
-**Exception: split into separate PRs** only when a phase is large
-enough to warrant independent review — substantial new features,
-major refactors, or 100+ lines of non-trivial changes.
+**Exception: split mid-batch** when a phase turns out to be large
+after implementation (100+ non-trivial lines in its diff, excluding
+tests, config, and imports). The decision is made after each phase's
+implementation, not before. If a phase exceeds the threshold:
+1. Ship all previously implemented phases as one PR (the batch so far).
+2. Wait for that PR to merge.
+3. Pull latest main, then continue with the large phase in its own
+   worktree and PR.
+4. Resume batching for subsequent phases.
 
 #### Batched flow (default)
 
@@ -136,6 +142,13 @@ major refactors, or 100+ lines of non-trivial changes.
    `pr-review-toolkit:pr-test-analyzer` for code quality) on the
    combined diff of all phases. Do NOT ship code that has not been
    through both simplify and review.
+   If the combined quality gate still has unresolved blockers after
+   hitting iteration caps, mark all batched phases as
+   `IMPLEMENTED_WITH_CONCERNS` in the plan and surface the findings.
+   **This is a hard stop even in autonomous mode** — combined-gate
+   blockers indicate cross-phase issues that per-phase reviews missed.
+   Do not proceed to ship. Present the unresolved findings and ask the
+   user for guidance.
 6. **Ship** the batch using the **ship** skill (Steps 1–7):
    - The ship skill commits, pushes, creates the PR, and starts
      background monitoring via monitor-pr.
@@ -145,24 +158,24 @@ major refactors, or 100+ lines of non-trivial changes.
      - If state is `MERGED`: mark all batched phases as `MERGED`
        and proceed to Completion.
 
-#### Split flow (large phases only)
+#### Split flow (triggered mid-batch by large phase)
 
-For each remaining `TODO` phase, in order:
+When a phase exceeds the size threshold after implementation:
 
-1. Print the progress dashboard.
-2. Pull the latest main: `git pull origin <main-branch>`.
-3. **Implement** the phase using the **implement** skill (Steps 1–7).
-4. **Quality gate check**: Verify Steps 4 (Simplify via
-   `code-simplifier:code-simplifier`) and 5 (Review via
-   `feature-dev:code-reviewer`, `pr-review-toolkit:code-reviewer`,
-   `pr-review-toolkit:silent-failure-hunter`,
-   `pr-review-toolkit:pr-test-analyzer`) were executed. If either was
-   skipped, run them now.
-5. **Ship** the phase using the **ship** skill (Steps 1–7):
-   - Wait for the merge as above.
+1. **Ship the batch so far**: Run the quality gate and ship skill on
+   all previously implemented phases. Wait for the PR to merge.
+2. `git pull origin <main-branch>`.
+3. Print the progress dashboard.
+4. Create a new worktree for the large phase.
+5. **Implement** the phase using the **implement** skill (Steps 1–7).
+6. **Quality gate check**: Run Steps 4 (Simplify) and 5 (Review) on
+   this phase's diff.
+7. **Ship** the phase using the **ship** skill (Steps 1–7):
+   - Wait for the merge.
    - **Strict sequential**: Do NOT start the next phase while the
      current PR is open. Each must be fully merged first.
-6. `git pull origin <main-branch>`, then loop back for the next phase.
+8. `git pull origin <main-branch>`, then resume batching for remaining
+   phases (create a new worktree, continue the loop).
 
 **After the last phase is shipped and merged**, proceed to Completion.
 

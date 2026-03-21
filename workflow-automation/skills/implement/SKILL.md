@@ -55,6 +55,11 @@ deterministic resume behavior and a clean state for subsequent skills.
 - If no plan exists, ask the user: create a plan first (using the
   **plan** skill), or implement ad-hoc without one?
 
+**Gitignore check**: Before writing `.workflow-state.json`, check if
+`.gitignore` exists and contains `.workflow-state.json`. If the entry is
+missing, append it (create `.gitignore` if needed). This prevents
+accidental commits of local workflow state.
+
 ### 2. Select the Next Phase
 
 - Identify incomplete work in the plan. Look for phases, steps, or sections
@@ -103,8 +108,8 @@ to the protocol before proceeding.
 Run a simplification pass on the changed code to clean up
 over-engineering, unnecessary abstractions, and code style issues before
 review. Spawn an agent using the Agent tool
-(`subagent_type="code-simplifier:code-simplifier"`) targeting the files
-modified in this phase.
+(`subagent_type="code-simplifier:code-simplifier"`, `model: "sonnet"`)
+targeting the files modified in this phase.
 
 If this agent type is unavailable, fall back to a general-purpose agent
 with instructions to simplify the changed code for clarity and
@@ -146,48 +151,8 @@ in the plan's Notes section.
 **Fallback**: If any agent type is unavailable, fall back to a
 general-purpose agent with the same focus prompt.
 
-## Available Anthropic Agents
-
-This catalog covers agents available to the workflow automation skills.
-The plan skill uses `feature-dev:code-architect` for plan review — see
-plan/SKILL.md Step 3 for that agent's role.
-
-**Review agents:**
-- `feature-dev:code-reviewer` — bugs, logic errors, security
-  vulnerabilities, code quality (confidence-filtered)
-- `pr-review-toolkit:code-reviewer` — project guidelines, CLAUDE.md
-  conventions, style guides
-- `pr-review-toolkit:silent-failure-hunter` — error handling, swallowed
-  exceptions, inappropriate fallback behavior
-- `pr-review-toolkit:pr-test-analyzer` — test coverage quality and gaps
-- `pr-review-toolkit:comment-analyzer` — comment accuracy and
-  completeness
-- `pr-review-toolkit:type-design-analyzer` — type design, encapsulation,
-  invariant expression
-
-**Implementation agents:**
-- `code-simplifier:code-simplifier` — simplify code for clarity and
-  maintainability
-- `feature-dev:code-architect` — design architectures from existing
-  codebase patterns
-- `feature-dev:code-explorer` — trace execution paths, map architecture,
-  understand dependencies
-
-**Exploration agents:**
-- `Explore` — fast codebase search (general purpose only; do NOT use
-  for code review or simplification — use the dedicated agents above)
-- `Plan` — implementation strategy design
-
-## Model Selection Guidance
-
-Consider using `model: "sonnet"` for mechanical, focused tasks
-(simplification, pattern-matching against guidelines, scanning for
-specific error patterns). Use the default model for tasks requiring
-deep reasoning (spec compliance review, architectural analysis, complex
-multi-file changes).
-
-These are suggestions, not rules. The user can override via CLAUDE.md
-preferences.
+See the **Agent Catalog** at the end of this file for the full list of
+available agents and their roles.
 
 ### 6. Update Documentation
 
@@ -296,3 +261,43 @@ phase).
 - Introducing a new pattern (e.g., direct implementation) when the file's
   existing functions use a wrapper/factory convention — replicate the
   existing structure instead
+
+## Agent Catalog
+
+Agents available to the workflow automation skills. The plan skill uses
+`feature-dev:code-architect` for plan review — see plan/SKILL.md Step 3.
+
+**Review agents:**
+- `feature-dev:code-reviewer` — bugs, logic errors, security
+  vulnerabilities, code quality (confidence-filtered)
+- `pr-review-toolkit:code-reviewer` — project guidelines, CLAUDE.md
+  conventions, style guides
+- `pr-review-toolkit:silent-failure-hunter` — error handling, swallowed
+  exceptions, inappropriate fallback behavior
+- `pr-review-toolkit:pr-test-analyzer` — test coverage quality and gaps
+- `pr-review-toolkit:comment-analyzer` — comment accuracy and
+  completeness
+- `pr-review-toolkit:type-design-analyzer` — type design, encapsulation,
+  invariant expression
+
+**Implementation agents:**
+- `code-simplifier:code-simplifier` — simplify code for clarity and
+  maintainability
+- `feature-dev:code-architect` — design architectures from existing
+  codebase patterns
+- `feature-dev:code-explorer` — trace execution paths, map architecture,
+  understand dependencies
+
+**Exploration agents:**
+- `Explore` — fast codebase search (general purpose only; do NOT use
+  for code review or simplification — use the dedicated agents above)
+- `Plan` — implementation strategy design
+
+## Model Selection Guidance
+
+Use `model: "sonnet"` for the simplification agent (Step 4) — it is
+mechanical and benefits from speed over depth. Use the default model
+for all review agents and tasks requiring deep reasoning (spec
+compliance, architectural analysis, complex multi-file changes).
+
+The user can override model choices via CLAUDE.md preferences.

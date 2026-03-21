@@ -40,8 +40,6 @@ Before writing anything, gather context:
   not re-derive design decisions that the spec already resolved — treat
   those as settled. Only ask clarifying questions about implementation
   phasing, not about design choices in the spec.
-- If no plan file or spec exists, look for standalone `spec-*.md` files
-  as a fallback. If found, import the spec content into a new plan file.
 - Ask clarifying questions if the scope is ambiguous
 - Identify constraints (backwards compatibility, performance, dependencies)
 
@@ -134,10 +132,10 @@ Review the plan in a loop until no new issues are found:
    (e.g., "Plan reviewed in 2 iterations") so the user can gauge how
    contested the plan was.
 
-**Guard rail**: Cap the loop at 4 total review iterations. If the 4th
+**Guard rail**: Cap the loop at 3 total review iterations. If the 3rd
 review still returns blockers that would require more revisions, stop
 there, present the plan with those unresolved issues clearly flagged,
-and ask the user for guidance instead of starting a 5th cycle.
+and ask the user for guidance instead of starting a 4th cycle.
 
 **Fallback**: If the Agent tool is unavailable, note in the plan that it
 was not independently reviewed and present it directly to the user.
@@ -184,7 +182,7 @@ Once approved, the user can proceed with:
 - **User rejects the plan**: Ask what they'd change — adjust scope, rethink
   design decisions, or offer to skip planning and implement directly.
 - **Reviewer finds blockers**: The iterative review loop (Step 3) handles
-  this automatically. If blockers persist after 4 iterations, present the
+  this automatically. If blockers persist after 3 iterations, present the
   plan with unresolved issues flagged and ask for user guidance.
 - **Ambiguous request**: If the user says "just plan it" without answering
   clarifying questions, make reasonable assumptions and document them

@@ -96,7 +96,7 @@ Use **CronCreate** with:
 
 Inform the user:
 
-> Monitoring PR #{number} (`{branch}`). Checking CI every ~4 minutes.
+> Monitoring PR #{number} (`{branch}`). Checking CI every ~5 minutes.
 > Will auto-merge when ready. Cron job ID: `{id}`.
 >
 > I'll only interrupt you for: ambiguous merge conflicts, review

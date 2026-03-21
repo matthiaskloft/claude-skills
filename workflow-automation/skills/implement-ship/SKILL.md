@@ -21,8 +21,8 @@ to `"implement-ship"` so sub-skills know they are part of a combined
 flow.
 
 **On startup**: Check for `.workflow-state.json`. If found with
-`mode: "implement-ship"`, resume from whichever sub-skill was active
-(implement or ship) at the recorded step.
+`mode: "implement-ship"` or `mode: "plan-implement-ship"`, resume from
+whichever sub-skill was active (implement or ship) at the recorded step.
 
 ## Step-by-Step
 
