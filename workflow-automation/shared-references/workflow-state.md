@@ -20,7 +20,6 @@ Add it to `.gitignore` to avoid committing it.
   "step": 3,
   "step_name": "Execute the Phase",
   "branch": "feat/csv-export-phase2",
-  "worktree": "../feat-csv-export-phase2",
   "pr_number": null,
   "monitor_cron_id": null,
   "mode": "auto-implement",
@@ -38,7 +37,6 @@ Add it to `.gitignore` to avoid committing it.
 | `step` | number | Current step number within the skill |
 | `step_name` | string | Human-readable step name |
 | `branch` | string | Git branch for this phase |
-| `worktree` | string \| null | Worktree path, or null if using a regular branch |
 | `pr_number` | number \| null | PR number if created, otherwise null |
 | `monitor_cron_id` | string \| null | CronCreate job ID if monitoring is active |
 | `mode` | string \| null | `"auto-implement"` (autonomous) or `null`/absent (standalone, one phase at a time) |
@@ -51,7 +49,7 @@ On startup, before doing anything else:
 2. If found, read it and check if the state is relevant:
    - Does the `plan` field match the current plan?
    - Is the `phase` still incomplete (not `MERGED` in the plan)?
-   - Is the `branch` or `worktree` still present?
+   - Is the `branch` still present?
 3. If the state is stale (phase already merged, branch deleted), delete
    the state file and start fresh.
 4. If the state is valid, offer to resume: "Found in-progress work:

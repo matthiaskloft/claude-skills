@@ -57,6 +57,19 @@ use AskUserQuestion for this step; just present the overview as text.
 Use **AskUserQuestion** as the default interaction tool — one question
 at a time, prefer multiple choice with descriptions.
 
+**Before every question**, output a brief context summary as plain text
+(not inside AskUserQuestion). This keeps the user oriented as the
+interview progresses. The summary should include:
+- **Where we are**: Which decision area this question addresses (refer
+  back to the numbered decisions from Step 2)
+- **What we've established**: 1-2 sentences recapping relevant answers
+  so far that inform this question (skip for the first question)
+- **Why this matters**: One sentence on how this answer shapes the design
+
+Keep the summary to 3-5 lines — enough to provide context, not so much
+that it becomes a wall of text. Then immediately follow with the
+AskUserQuestion call.
+
 Focus on understanding:
 - **Purpose**: What problem does this solve? Who benefits?
 - **Constraints**: Performance requirements, backwards compatibility,

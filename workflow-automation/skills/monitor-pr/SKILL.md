@@ -25,7 +25,7 @@ See `../../shared-references/workflow-state.md` for the full protocol.
 `skill: "monitor-pr"` and a `monitor_cron_id`. If found, the previous
 session was monitoring this PR. Check if the PR is still open
 (`gh pr view`). If open, re-gather context from Step 2 (branch,
-worktree, merge strategy), then skip to Step 4 to create a new cron
+merge strategy), then skip to Step 4 to create a new cron
 job (the old one died with the previous session). If merged/closed,
 clear the state file and stop.
 
@@ -54,9 +54,6 @@ Collect the information needed for the cron prompt:
 - **PR number**: from Step 1
 - **Branch name**:
   `gh pr view <pr-number> --json headRefName --jq '.headRefName'`
-- **Worktree path**: Check if a worktree exists for this branch via
-  `git worktree list` and look for the branch name. Record the path
-  if found, otherwise record `none`.
 - **Merge strategy**: Check CLAUDE.md or repo settings for convention.
   Default to `--squash`.
 - **Main branch**: Detect from repo (e.g., `main`, `master`).
@@ -72,7 +69,7 @@ Before creating the cron job:
   characters (`a-zA-Z0-9/_.-`). If it contains shell metacharacters
   (`;`, `&`, `|`, `$`, backticks, spaces, etc.), refuse to monitor
   and warn the user — a malicious branch name could inject commands
-  into the cron prompt. Similarly validate the worktree path.
+  into the cron prompt.
 - **SSH connectivity check**: Test that git can reach the remote:
   `git ls-remote --exit-code origin HEAD`
   If this fails (DNS resolution, SSH timeout), automatically switch
@@ -113,12 +110,9 @@ review triage before merging, then cleans up after a successful merge:
   review comments from automated reviewers (CodeRabbit, Copilot). If
   found, fix and push; next cycle will re-check. Caps at 6 fix attempts.
 
-- **Worktree cleanup** (if a worktree path was recorded):
-  1. Ensure the working directory is the main repo root (use
-     `git worktree list` to find it, not `git rev-parse --show-toplevel`)
-  2. `git worktree remove --force <worktree-path>`
-  3. If the local branch still exists: `git branch -d <branch-name>`
-     (use `-D` as fallback — safe because the PR was just merged)
+- **Branch cleanup**: If the local branch still exists:
+  `git branch -d <branch-name>` (use `-D` as fallback — safe because
+  the PR was just merged)
 
 - **Pull latest main**: `git pull origin <main-branch>`. If it fails
   due to uncommitted local changes, report the error — do not stash
@@ -147,10 +141,9 @@ The user can stop monitoring manually by saying "stop monitoring" or
 ## Cron Prompt
 
 The following is the prompt text to use with CronCreate. Replace
-`{pr_number}`, `{branch}`, `{worktree_path}`, `{merge_strategy}`,
-`{main_branch}`, `{cron_job_id}`, `{plan_file}`,
-`{original_remote_url}`, and `{remote_url_switched}` with actual
-values at creation time.
+`{pr_number}`, `{branch}`, `{merge_strategy}`, `{main_branch}`,
+`{cron_job_id}`, `{plan_file}`, `{original_remote_url}`, and
+`{remote_url_switched}` with actual values at creation time.
 `{plan_file}` is the resolved path to the plan document (e.g.,
 `dev/plans/plan-my-feature.md`), or `none` if no plan exists.
 `{original_remote_url}` is the remote URL recorded before any
@@ -229,8 +222,8 @@ Check the status of PR #{pr_number} (branch: {branch}) and take action:
       gh pr merge {pr_number} {merge_strategy} --delete-branch
    - On success: cancel this cron job (CronDelete job {cron_job_id}). Say "PR #{pr_number} merged successfully."
      Then clean up:
-     c. Ensure CWD is the main repo root (not inside a worktree): get the main worktree path from git worktree list (the first entry is always the main worktree) and cd there. Do NOT use git rev-parse --show-toplevel — it returns the current worktree's root, not the main repo's.
-        Remove the worktree (if path is not "none") with git worktree remove --force {worktree_path}, then delete the local branch with git branch -d {branch}. If -d fails (branch not fully merged into current HEAD), use git branch -D {branch} — this is safe because the PR was just merged on the remote. (The remote branch was already deleted by `--delete-branch` above.)
+     c. Ensure CWD is the main repo root. Verify clean working tree (git status --porcelain). If clean, switch to main: git checkout {main_branch}. If dirty, warn the user and skip branch deletion — do not force-checkout over uncommitted changes.
+        Delete the local branch with git branch -d {branch}. If -d fails (branch not fully merged into current HEAD), use git branch -D {branch} — this is safe because the PR was just merged on the remote. (The remote branch was already deleted by `--delete-branch` above.)
      d. If {remote_url_switched} is "true", restore the original remote URL: git remote set-url origin {original_remote_url}
      e. Run git pull origin {main_branch}. If it fails due to uncommitted local changes, report the error — do not stash automatically.
      f. If {plan_file} is not "none": update the current phase to MERGED with the PR URL in {plan_file}, then check remaining TODO phases: TODO_COUNT=$(grep -c "| TODO |" "{plan_file}" || echo "0"). If TODO_COUNT is 0, rename the plan: git mv "{plan_file}" "{plan_file%.md}-done.md" 2>/dev/null || mv "{plan_file}" "{plan_file%.md}-done.md" && git commit -m "mark plan complete". Inform the user of remaining phases or completion. If {plan_file} is "none", skip plan updates.
@@ -257,11 +250,6 @@ Check the status of PR #{pr_number} (branch: {branch}) and take action:
 - **Protected branches**: If merge fails due to branch protection
   rules the monitor can't satisfy, inform the user and continue
   monitoring.
-- **Worktree and branch deletion order**: The merge uses
-  `--delete-branch` to delete the remote branch. The cleanup step
-  (5.c) removes the worktree first, then deletes the local branch.
-  This order is important — deleting a local branch fails if a
-  worktree is still checked out on it.
 - **Bot reviewers post comments without setting reviewDecision**: The
   cron prompt fetches and triages inline review comments (step 5a)
   before every merge attempt. This catches CodeRabbit, Copilot, and

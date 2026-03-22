@@ -129,8 +129,8 @@ Delegate CI monitoring and auto-merge to the **monitor-pr** skill:
 - Invoke `/monitor-pr` with the PR number from Step 3.
 - monitor-pr sets up a background cron job (every ~5 min) that checks
   CI, fixes failures, and auto-merges when ready.
-- It also handles post-merge cleanup (worktree removal, branch
-  deletion, pulling latest main).
+- It also handles post-merge cleanup (branch deletion, pulling
+  latest main).
 
 After monitor-pr creates the cron job, wait for the merge to complete.
 Poll every 2 minutes with
@@ -145,14 +145,12 @@ resolve it, then re-invoke `/monitor-pr` to resume.
 
 The **monitor-pr** skill handles cleanup. Verify it completed:
 
-- Run `git worktree list` to confirm the worktree is removed
 - Run `git branch` to confirm the feature branch is deleted
 - If cleanup was incomplete (e.g., monitor-pr was interrupted),
   perform it manually:
-  1. Return to the main repository directory
-  2. `git worktree remove ../feat-<feature>-<phase>` (if worktree exists)
-  3. `git branch -d feat/<feature>-<phase>` (if branch exists)
-  4. `git pull origin <main-branch>`
+  1. `git checkout <main-branch>`
+  2. `git branch -d feat/<feature>-<phase>` (if branch exists)
+  3. `git pull origin <main-branch>`
 
 ### 6. Update the Plan
 
@@ -187,9 +185,7 @@ monitor-pr already did this:
 
 This skill works with the branch created by the **implement** skill:
 - Branch naming: `feat/<feature>-<phase>`
-- Worktree location: `../feat-<feature>-<phase>`
-- If no worktree exists (user implemented on a regular branch), ship
-  from whatever branch is currently checked out
+- Ship from whatever branch is currently checked out
 - Detect the main branch name from the repo (e.g., `main`, `master`)
 
 ## Troubleshooting
@@ -211,7 +207,7 @@ This skill works with the branch created by the **implement** skill:
 - Force-pushing or using `--no-verify` to bypass failing checks
 - Committing secrets, `.env` files, or build artifacts
 - Merging without CI passing
-- Not cleaning up worktrees and branches after merge
+- Not cleaning up branches after merge
 - Forgetting to update the plan document after shipping
 - Creating a monolithic commit instead of logical, reviewable chunks
 - Amending commits to fix CI instead of creating separate fix commits

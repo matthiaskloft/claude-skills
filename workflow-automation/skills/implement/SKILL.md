@@ -244,14 +244,20 @@ phase).
 
 - Detect the main branch name (e.g., `main`, `master`) from the repo
 - Pull the latest main: `git pull origin <main-branch>`
-- Try to create a worktree for the phase:
-  `git worktree add -b feat/<feature>-<phase> ../feat-<feature>-<phase> origin/<main-branch>`
-- If worktree creation fails (e.g., "Read-only file system" on WSL2),
-  fall back to a regular branch in the current repo:
+- Verify working tree is clean (`git status --porcelain`). If there are
+  uncommitted changes, stash them (`git stash`) before branching and
+  inform the user. In autonomous mode, stash silently and continue.
+- Create a feature branch in the current repo:
   `git checkout -b feat/<feature>-<phase> origin/<main-branch>`
-- Work in the worktree directory (or the current repo if using a regular branch)
+- Work in the current repo directory
 - The **ship** skill handles committing, PR, and cleanup
-- If abandoning a phase, ask the user before deleting the worktree/branch
+- If abandoning a phase, ask the user before deleting the branch
+
+**Why not worktrees**: Worktrees created outside the project directory
+(e.g., `../feat-something/`) fall outside the sandbox's allowed paths.
+Commands run from there bypass the sandbox, requiring explicit
+per-command permissions and defeating autonomous mode. Regular branches
+stay within the sandbox.
 
 ## Troubleshooting
 
@@ -266,14 +272,10 @@ phase).
   protocol (see When to Stop and Escalate).
 - **Blocked by a dependency**: See Phase Execution Statuses — mark the
   phase as `BLOCKED` or `NEEDS_INPUT` and follow the protocol there.
-- **WSL git index lock**: On WSL2, the first `git add` or `git mv` in
-  a worktree may fail with "Read-only file system" on the index.lock.
-  Retry the same command — it typically succeeds on the second attempt.
-  Do not treat this as a fatal error.
-- **pytest temp-file failures in worktrees**: On WSL2, pytest may fail
-  with permission or path errors on temporary files. Prefix test commands
-  with `TMPDIR=/tmp/claude-1000` (e.g., `TMPDIR=/tmp/claude-1000 pytest`)
-  to ensure temp files land in a sandbox-writable location. If failures
+- **pytest temp-file failures on WSL2**: pytest may fail with permission
+  or path errors on temporary files. Prefix test commands with
+  `TMPDIR=/tmp/claude-1000` (e.g., `TMPDIR=/tmp/claude-1000 pytest`) to
+  ensure temp files land in a sandbox-writable location. If failures
   persist with `--capture` (FileNotFoundError on fd writes), add
   `-p no:capture` to disable the capture plugin entirely.
 

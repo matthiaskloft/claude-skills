@@ -45,7 +45,30 @@ not re-confirm.
 
 ## Step-by-Step
 
-### 0. Permission and Sandbox Pre-flight
+### 0. Context Reset
+
+Auto-implement is a long-running autonomous workflow that consumes
+significant context. Before starting, clear stale conversation history
+so the run has maximum room.
+
+1. **Capture essentials** — note down (in your working memory, not a
+   file) the information you need to proceed:
+   - The user's task description / feature request
+   - Path to any existing plan file (if referenced or found)
+   - Any explicit user preferences stated in this conversation
+     (e.g., shipping strategy, branch naming)
+2. **Ask the user to clear context** — output:
+   "Before starting the autonomous run, please type `/clear` to free
+   up context. I've captured everything I need to proceed."
+   Wait for the user's next message (which arrives after the clear).
+3. **Re-anchor** — after the clear, output a single line:
+   "Auto-implement starting: {one-sentence task summary}" so the
+   conversation has a clear starting point. Then proceed to Step 0b.
+
+Skip this step when resuming from `.workflow-state.json` — resumed
+runs already start with a clean context.
+
+### 0b. Permission and Sandbox Pre-flight
 
 Follow the pre-flight protocol in
 `../../shared-references/autonomous-permissions.md`. Only proceed to
@@ -108,7 +131,7 @@ blockers." Then begin immediately — do not ask for confirmation.
 **Default: batch all phases into one PR.** Most plan phases are
 tightly coupled and per-phase PRs create unnecessary overhead.
 Implement all remaining `TODO` phases sequentially in a single
-worktree, then ship once.
+feature branch, then ship once.
 
 **Exception: split mid-batch** when a phase turns out to be large
 after implementation (100+ non-trivial lines in its diff, excluding
@@ -117,14 +140,14 @@ implementation, not before. If a phase exceeds the threshold:
 1. Ship all previously implemented phases as one PR (the batch so far).
 2. Wait for that PR to merge.
 3. Pull latest main, then continue with the large phase in its own
-   worktree and PR.
+   feature branch and PR.
 4. Resume batching for subsequent phases.
 
 #### Batched flow (default)
 
 1. Pull the latest main: `git pull origin <main-branch>`.
-2. Create a worktree for the batch (or a regular branch if worktree
-   creation fails — see implement skill's Branching section).
+2. Create a feature branch for the batch (see implement skill's
+   Branching section).
 3. Print the progress dashboard.
 4. For each remaining `TODO` phase, in order:
    a. **Implement** the phase using the **implement** skill
@@ -178,8 +201,7 @@ When a phase exceeds the size threshold after implementation:
    all previously implemented phases. Wait for the PR to merge.
 2. `git pull origin <main-branch>`.
 3. Print the progress dashboard.
-4. Create a new worktree for the large phase (or a regular branch if
-   worktree creation fails).
+4. Create a new feature branch for the large phase.
 5. **Implement** the phase using the **implement** skill (Steps 1–7).
 6. **Quality gate check**: Run Steps 4 (Simplify) and 5 (Review) on
    this phase's diff.
@@ -188,7 +210,7 @@ When a phase exceeds the size threshold after implementation:
    - **Strict sequential**: Do NOT start the next phase while the
      current PR is open. Each must be fully merged first.
 8. `git pull origin <main-branch>`, then resume batching for remaining
-   phases (create a new worktree or regular branch, continue the loop).
+   phases (create a new feature branch, continue the loop).
 
 **After the last phase is shipped and merged**, proceed to Completion.
 
@@ -236,7 +258,7 @@ When all phases are `MERGED`:
 - Each phase goes through the full implement → ship cycle including all
   quality gates (simplify, deep review, CI). No shortcuts.
 - **Default: batch phases into one PR**. Implement all remaining
-  phases in a single worktree and ship them as one PR. Only split
+  phases in a single feature branch and ship them as one PR. Only split
   phases into separate PRs when a phase is large enough to warrant
   independent review (substantial new feature, major refactor, or
   100+ lines of non-trivial changes). When in doubt, batch.
