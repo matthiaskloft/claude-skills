@@ -149,13 +149,18 @@ implementation, not before. If a phase exceeds the threshold:
    combined diff of all phases. Spec compliance checks all phases
    against the full plan, not per-phase. Do NOT ship code that has
    not been through both simplify and review.
-   If the combined quality gate still has unresolved blockers after
-   hitting iteration caps, mark all batched phases as
-   `IMPLEMENTED_WITH_CONCERNS` in the plan and surface the findings.
-   **This is a hard stop even in autonomous mode** — combined-gate
-   blockers indicate cross-phase issues that per-phase reviews missed.
-   Do not proceed to ship. Present the unresolved findings and ask the
-   user for guidance.
+   Judge whether each finding is justified before acting:
+   - **Blockers**: Fix every justified blocker. Dismiss unjustified
+     blockers with a brief rationale.
+   - **Warnings**: Evaluate each warning — fix if warranted, otherwise
+     note why it was dismissed.
+   - **Suggestions**: Defer to the project's dev docs TODO file.
+   If justified blockers remain after hitting iteration caps, mark all
+   batched phases as `IMPLEMENTED_WITH_CONCERNS` in the plan and surface
+   the findings. **This is a hard stop even in autonomous mode** —
+   combined-gate blockers indicate cross-phase issues that per-phase
+   reviews missed. Do not proceed to ship. Present the unresolved
+   findings and ask the user for guidance.
 6. **Ship** the batch using the **ship** skill (Steps 1–7):
    - The ship skill commits, pushes, creates the PR, and starts
      background monitoring via monitor-pr.

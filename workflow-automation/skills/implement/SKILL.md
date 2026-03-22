@@ -130,9 +130,17 @@ steps were addressed, (2) no over-building beyond the plan's scope,
 established in the same file or module. For each finding, state severity
 (blocker/warning/suggestion) and a concrete fix."
 
-Fix any blockers or warnings, then re-run Stage 1. Cap at 2 iterations
-— if spec compliance still has blockers after 2 rounds, stop and inform
-the user.
+Handle feedback: judge whether each finding is justified before acting.
+- **Blockers**: Fix every justified blocker. Dismiss unjustified blockers
+  with a brief rationale.
+- **Warnings**: Evaluate each warning — fix if warranted, otherwise note
+  why it was dismissed.
+- **Suggestions**: Defer to the project's dev docs TODO file (see
+  `../../shared-references/todo-convention.md`) with the phase name as
+  source.
+
+Re-run Stage 1 after any fixes. Cap at 2 iterations — if spec compliance
+still has justified blockers after 2 rounds, stop and inform the user.
 
 **Stage 2 — Code quality** (only after Stage 1 passes):
 
@@ -144,11 +152,18 @@ Spawn three agents in parallel:
 - `subagent_type="pr-review-toolkit:pr-test-analyzer"` — test coverage
   quality and critical gaps
 
-Collect findings from all three. Fix blockers and warnings, then re-run
-Stage 2. Cap at 3 iterations — if the 3rd iteration still has blockers,
-stop and inform the user. Suggestions may be deferred — add them to
-the project's dev docs TODO file (see
-`../../shared-references/todo-convention.md`) with the phase name as source.
+Collect findings from all three. Judge whether each finding is justified
+before acting:
+- **Blockers**: Fix every justified blocker. Dismiss unjustified blockers
+  with a brief rationale.
+- **Warnings**: Evaluate each warning — fix if warranted, otherwise note
+  why it was dismissed.
+- **Suggestions**: Defer to the project's dev docs TODO file (see
+  `../../shared-references/todo-convention.md`) with the phase name as
+  source.
+
+Re-run Stage 2 after any fixes. Cap at 3 iterations — if the 3rd
+iteration still has justified blockers, stop and inform the user.
 
 **Fallback**: If any agent type is unavailable, fall back to a
 general-purpose agent with the same focus prompt.
