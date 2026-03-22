@@ -123,7 +123,8 @@ implementation, not before. If a phase exceeds the threshold:
 #### Batched flow (default)
 
 1. Pull the latest main: `git pull origin <main-branch>`.
-2. Create a single worktree for the batch.
+2. Create a worktree for the batch (or a regular branch if worktree
+   creation fails — see implement skill's Branching section).
 3. Print the progress dashboard.
 4. For each remaining `TODO` phase, in order:
    a. **Implement** the phase using the **implement** skill
@@ -172,7 +173,8 @@ When a phase exceeds the size threshold after implementation:
    all previously implemented phases. Wait for the PR to merge.
 2. `git pull origin <main-branch>`.
 3. Print the progress dashboard.
-4. Create a new worktree for the large phase.
+4. Create a new worktree for the large phase (or a regular branch if
+   worktree creation fails).
 5. **Implement** the phase using the **implement** skill (Steps 1–7).
 6. **Quality gate check**: Run Steps 4 (Simplify) and 5 (Review) on
    this phase's diff.
@@ -181,7 +183,7 @@ When a phase exceeds the size threshold after implementation:
    - **Strict sequential**: Do NOT start the next phase while the
      current PR is open. Each must be fully merged first.
 8. `git pull origin <main-branch>`, then resume batching for remaining
-   phases (create a new worktree, continue the loop).
+   phases (create a new worktree or regular branch, continue the loop).
 
 **After the last phase is shipped and merged**, proceed to Completion.
 

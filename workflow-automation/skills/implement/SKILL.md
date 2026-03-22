@@ -229,11 +229,14 @@ phase).
 
 - Detect the main branch name (e.g., `main`, `master`) from the repo
 - Pull the latest main: `git pull origin <main-branch>`
-- Create a worktree for the phase:
+- Try to create a worktree for the phase:
   `git worktree add -b feat/<feature>-<phase> ../feat-<feature>-<phase> origin/<main-branch>`
-- Work in the worktree directory
+- If worktree creation fails (e.g., "Read-only file system" on WSL2),
+  fall back to a regular branch in the current repo:
+  `git checkout -b feat/<feature>-<phase> origin/<main-branch>`
+- Work in the worktree directory (or the current repo if using a regular branch)
 - The **ship** skill handles committing, PR, and cleanup
-- If abandoning a phase, ask the user before deleting the worktree and branch
+- If abandoning a phase, ask the user before deleting the worktree/branch
 
 ## Troubleshooting
 
