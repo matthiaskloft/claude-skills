@@ -1,19 +1,19 @@
 ---
-name: brainstorm
+name: feature-spec
 description: >
   Explore a feature idea and produce a spec doc before planning. Use when
-  the user says "brainstorm", "explore this idea", "let's discuss the
+  the user says "feature-spec", "explore this idea", "let's discuss the
   approach", "what are my options for", or wants to think through a
   design before committing to a plan. Also trigger when the user says
-  "/brainstorm". Do NOT use for tasks that already have a clear design
+  "/feature-spec". Do NOT use for tasks that already have a clear design
   — use the feature-plan skill directly. Do NOT use mid-implementation.
 ---
 
-# Brainstorm — Design Exploration to Spec
+# Feature Spec — Design Exploration to Spec
 
 This skill produces the **Spec** section of a plan document — the
 design, requirements, and decisions for a feature. It does NOT produce
-implementation phases. After brainstorming, use the **feature-plan**
+implementation phases. After the feature-spec skill, use the **feature-plan**
 skill (`/feature-plan`) to add phased implementation steps, or **auto-implement**
 (`/auto-implement`) to plan and ship in one flow.
 
@@ -38,7 +38,7 @@ tool call) covering:
 
 - **Context summary**: What exists today — relevant code, patterns,
   and constraints you discovered in Step 1 (2-4 bullet points)
-- **Key decisions ahead**: The major design questions this brainstorm
+- **Key decisions ahead**: The major design questions this feature spec
   will need to resolve, presented as a numbered list (typically 3-6
   items). Each item should be a concrete question, not a vague topic.
   Examples: "Where should the new endpoint live — extend the existing
@@ -48,7 +48,7 @@ tool call) covering:
   these decisions (e.g., "I'll start with scope and requirements, then
   move to architecture choices")
 
-This gives the user a mental map of the brainstorm before the first
+This gives the user a mental map of the feature spec before the first
 question arrives. Keep it brief — aim for 8-15 lines total. Do not
 use AskUserQuestion for this step; just present the overview as text.
 
@@ -177,9 +177,9 @@ path as context.
 
 ## Hard Gate
 
-Do NOT write code during brainstorming. This skill produces a spec,
+Do NOT write code during the feature-spec skill. This skill produces a spec,
 not implementation. If the user asks to start coding, suggest completing
-the brainstorm first, then using `/feature-plan` followed by `/implement`.
+the feature spec first, then using `/feature-plan` followed by `/implement`.
 
 ## Common Mistakes
 

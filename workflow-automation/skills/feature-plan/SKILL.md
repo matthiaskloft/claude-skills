@@ -36,7 +36,7 @@ Before writing anything, gather context:
 - **Check for an existing plan file** (`plan-*.md`, excluding
   `plan-*-done.md`) in the dev docs `plans/` subfolder and project root.
   If a plan file exists with a filled-in `## Spec` section (from
-  brainstorming), use it as the primary source for design decisions. Do
+  the feature-spec skill), use it as the primary source for design decisions. Do
   not re-derive design decisions that the spec already resolved — treat
   those as settled. Only ask clarifying questions about implementation
   phasing, not about design choices in the spec.
@@ -44,12 +44,12 @@ Before writing anything, gather context:
 - Identify constraints (backwards compatibility, performance, dependencies)
 
 For ambiguous or large-scope requests where the design approach is
-unclear, suggest using the **brainstorm** skill first to explore the
+unclear, suggest using the **feature-spec** skill first to explore the
 problem space and produce a spec before committing to a plan.
 
 ### 2. Create or Complete the Plan Document
 
-**If a plan file already exists** (from brainstorm): Open it and add
+**If a plan file already exists** (from feature-spec): Open it and add
 the implementation sections below the existing Spec section.
 
 **If no plan file exists**: Create a new one.
@@ -65,7 +65,7 @@ the implementation sections below the existing Spec section.
 - For a filled-in example, see `references/plan-example.md`
 - Fill in every section — leave nothing as placeholder text
 
-**If creating both Spec and Plan from scratch** (no brainstorm): Fill
+**If creating both Spec and Plan from scratch** (no feature-spec): Fill
 in the full Spec section (Summary, Requirements, Design Decisions,
 Scope, Architecture Overview, Constraints, Open Questions) and mark
 `Spec` as `DONE` in the status table.
@@ -158,7 +158,7 @@ implementation. Highlight:
 ### 5. Track Status
 
 Update the status table:
-- Mark `Spec` as `DONE` (if not already from brainstorm)
+- Mark `Spec` as `DONE` (if not already from feature-spec)
 - Mark `Plan` as `DONE`
 
 Statuses: `TODO`, `IN_PROGRESS`, `DONE`, `IMPLEMENTED`, `COMMITTED`, `MERGED`, `SKIPPED`

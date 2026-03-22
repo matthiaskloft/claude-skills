@@ -15,7 +15,7 @@
 ## Spec
 
 _Design decisions and requirements — the "what and why". Produced by
-brainstorming or written directly. Treat as settled once the Plan row
+the feature-spec skill or written directly. Treat as settled once the Plan row
 is marked DONE._
 
 ### Summary

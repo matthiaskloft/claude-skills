@@ -8,7 +8,7 @@ description: >
   "/autopilot", "do this autonomously", "build autonomously",
   "build and merge everything", or wants to go from idea (or existing
   plan) to fully merged feature without stopping. Also triggered from
-  brainstorm hand-off when user selects "Plan and ship". Works with or
+  feature-spec hand-off when user selects "Plan and ship". Works with or
   without an existing plan — skips planning if a plan is already approved.
   Do NOT use for tasks small enough to implement directly without planning.
 ---
@@ -62,7 +62,7 @@ Check for an existing plan:
 - If no plan exists, run the **feature-plan** skill in full (Steps 1–5).
 
 **Spec-only plan** (Spec is `DONE` but Plan is `TODO`): The plan file
-has a completed Spec section (from `/brainstorm`) but no implementation
+has a completed Spec section (from `/feature-spec`) but no implementation
 phases yet. Ask the user:
 
 > "This plan has a spec but no implementation phases yet. How would you
@@ -252,8 +252,8 @@ When all phases are `MERGED`:
   "ship each phase separately"), acknowledge the quality gate
   tradeoff and proceed with their preference.
 - For features where the design needs more exploration first, suggest
-  `/brainstorm` before `/auto-implement`.
+  `/feature-spec` before `/auto-implement`.
 - The feature-plan skill's review loop and the implement skill's quality
   gates all run — no shortcuts. The full pipeline is:
-  brainstorm (optional) → feature-plan (with review) → implement (with
+  feature-spec (optional) → feature-plan (with review) → implement (with
   simplify + review) → ship (with CI + merge).
