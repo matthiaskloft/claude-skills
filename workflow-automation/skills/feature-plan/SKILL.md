@@ -1,11 +1,11 @@
 ---
-name: plan
+name: feature-plan
 description: >
   Create a structured feature plan document before implementation. Use when the
   user says "plan a feature", "design this", "create a plan", "let's plan",
   "write a plan for", "think through how to build", "architect this",
-  "how should I approach building", or describes a feature they want to build
-  and needs a design-first approach. Also trigger when the user says "/plan".
+  "feature-plan", "/feature-plan", "how should I approach building", or
+  describes a feature they want to build and needs a design-first approach.
   Do NOT use for tasks small enough to implement directly without planning.
   Do NOT activate if the user is mid-implementation working from an existing plan.
 ---
@@ -60,7 +60,7 @@ the implementation sections below the existing Spec section.
 - Filename: `plan-<kebab-case-name>.md`
   - When a plan is fully completed (all phases merged), it gets renamed
     to `plan-<kebab-case-name>-done.md` — see the ship and
-    implement-ship-all skills for when this happens.
+    auto-implement skill for when this happens.
 - Use the template in `references/plan-template.md`
 - For a filled-in example, see `references/plan-example.md`
 - Fill in every section — leave nothing as placeholder text
@@ -73,15 +73,22 @@ Scope, Architecture Overview, Constraints, Open Questions) and mark
 Key sections to get right:
 - **Summary**: One paragraph on motivation + outcome. Be specific.
 - **Design Decisions**: Document alternatives considered, not just the choice
-- **Scope**: Explicitly list what's out of scope to prevent creep. Document
-  out-of-scope items that still need doing in a todo file in the project's
-  development docs directory (e.g., `dev/todos.md`), creating it if needed.
+- **Scope**: Explicitly list what's out of scope to prevent creep. Add
+  out-of-scope items that still need doing to the project's TODO file
+  (see **TODO File Convention**).
 - **Implementation Plan**: Break into phases. Each phase should be
   independently shippable if possible and small enough to complete in a
   single session of agentic coding (one `/implement` invocation or one
   focused Claude Code conversation). A phase is independently shippable
   if it can be merged without breaking existing functionality or leaving
   dead code paths — no feature flags or temporary scaffolding needed.
+- **File lists must be exhaustive**: For each phase, list every file to
+  create and every file to modify. To find all affected files, grep the
+  codebase for the patterns being changed — not just the obvious call
+  sites. For example, when changing a function signature, grep for
+  all callers, mock sites in tests, re-exports, and type references.
+  A common miss is test files that mock or patch the function being
+  changed.
 - **Verification**: How to confirm correctness beyond "tests pass". Align
   with the project's review conventions if a review checklist exists.
 
@@ -159,9 +166,8 @@ Statuses: `TODO`, `IN_PROGRESS`, `DONE`, `IMPLEMENTED`, `COMMITTED`, `MERGED`, `
 ## After Planning
 
 Once approved, the user can proceed with:
-- **`/implement`** — build the feature phase by phase
-- **`/implement-ship`** — implement and ship a single phase
-- **`/implement-ship-all`** — implement and ship all phases autonomously
+- **`/auto-implement`** — implement and ship all phases (recommended)
+- **`/implement`** — build a single phase without shipping
 
 ## Common Mistakes
 
@@ -190,3 +196,8 @@ Once approved, the user can proceed with:
 - **Spec needs changes**: If during planning you discover the Spec section
   needs updates (e.g., a design decision doesn't work for implementation),
   update the Spec section and note the change in Review Feedback.
+
+## TODO File Convention
+
+See `../../shared-references/todo-convention.md` for the full convention
+on tracking deferred and out-of-scope items.

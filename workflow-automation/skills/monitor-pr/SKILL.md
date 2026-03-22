@@ -226,11 +226,11 @@ Check the status of PR #{pr_number} (branch: {branch}) and take action:
       - If no actionable comments remain (all non-actionable or empty): proceed to merge.
 
    b. Merge:
-      gh pr merge {pr_number} {merge_strategy}
+      gh pr merge {pr_number} {merge_strategy} --delete-branch
    - On success: cancel this cron job (CronDelete job {cron_job_id}). Say "PR #{pr_number} merged successfully."
      Then clean up:
      c. Ensure CWD is the main repo root (not inside a worktree): get the main worktree path from git worktree list (the first entry is always the main worktree) and cd there. Do NOT use git rev-parse --show-toplevel — it returns the current worktree's root, not the main repo's.
-        Remove the worktree (if path is not "none") with git worktree remove --force {worktree_path}, then delete the local branch with git branch -d {branch}. If -d fails (branch not fully merged into current HEAD), use git branch -D {branch} — this is safe because the PR was just merged on the remote.
+        Remove the worktree (if path is not "none") with git worktree remove --force {worktree_path}, then delete the local branch with git branch -d {branch}. If -d fails (branch not fully merged into current HEAD), use git branch -D {branch} — this is safe because the PR was just merged on the remote. (The remote branch was already deleted by `--delete-branch` above.)
      d. If {remote_url_switched} is "true", restore the original remote URL: git remote set-url origin {original_remote_url}
      e. Run git pull origin {main_branch}. If it fails due to uncommitted local changes, report the error — do not stash automatically.
      f. If {plan_file} is not "none": update the current phase to MERGED with the PR URL in {plan_file}, then check remaining TODO phases: TODO_COUNT=$(grep -c "| TODO |" "{plan_file}" || echo "0"). If TODO_COUNT is 0, rename the plan: git mv "{plan_file}" "{plan_file%.md}-done.md" 2>/dev/null || mv "{plan_file}" "{plan_file%.md}-done.md" && git commit -m "mark plan complete". Inform the user of remaining phases or completion. If {plan_file} is "none", skip plan updates.
@@ -257,10 +257,11 @@ Check the status of PR #{pr_number} (branch: {branch}) and take action:
 - **Protected branches**: If merge fails due to branch protection
   rules the monitor can't satisfy, inform the user and continue
   monitoring.
-- **Worktree blocks branch deletion**: Never use `--delete-branch`
-  with `gh pr merge` when a worktree exists on the feature branch.
-  The cleanup step (5.c) handles branch deletion after worktree
-  removal.
+- **Worktree and branch deletion order**: The merge uses
+  `--delete-branch` to delete the remote branch. The cleanup step
+  (5.c) removes the worktree first, then deletes the local branch.
+  This order is important — deleting a local branch fails if a
+  worktree is still checked out on it.
 - **Bot reviewers post comments without setting reviewDecision**: The
   cron prompt fetches and triages inline review comments (step 5a)
   before every merge attempt. This catches CodeRabbit, Copilot, and

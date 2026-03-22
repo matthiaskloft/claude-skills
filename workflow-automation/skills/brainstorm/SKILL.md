@@ -6,16 +6,16 @@ description: >
   approach", "what are my options for", or wants to think through a
   design before committing to a plan. Also trigger when the user says
   "/brainstorm". Do NOT use for tasks that already have a clear design
-  — use the plan skill directly. Do NOT use mid-implementation.
+  — use the feature-plan skill directly. Do NOT use mid-implementation.
 ---
 
 # Brainstorm — Design Exploration to Spec
 
 This skill produces the **Spec** section of a plan document — the
 design, requirements, and decisions for a feature. It does NOT produce
-implementation phases. After brainstorming, use the **plan** skill
-(`/plan`) to add phased implementation steps, or **plan-implement-ship**
-(`/plan-implement-ship`) to plan and ship in one flow.
+implementation phases. After brainstorming, use the **feature-plan**
+skill (`/feature-plan`) to add phased implementation steps, or **auto-implement**
+(`/auto-implement`) to plan and ship in one flow.
 
 **Brainstorm = "what and why"** (Spec section of the plan).
 **Plan = "how and when"** (Implementation Plan section).
@@ -99,10 +99,10 @@ Write the Spec section into a plan document:
   project root.
 - **Filename**: `plan-<kebab-case-name>.md`
 - **Template**: Use the plan template from
-  `references/plan-template.md` (relative to the plan skill). Fill in
-  the `## Spec` section and its subsections. Leave the
-  `## Implementation Plan` section with placeholder content — the plan
-  skill fills that in.
+  `../feature-plan/references/plan-template.md`. Fill in the `## Spec`
+  section and its subsections. Leave the `## Implementation Plan`
+  section with placeholder content — the feature-plan skill fills
+  that in.
 - **Status table**: Set `Spec` to `IN_PROGRESS`. Leave `Plan` and all
   phases as `TODO`.
 
@@ -160,26 +160,26 @@ Ask the user via AskUserQuestion whether to proceed:
 > "Spec written and reviewed (`<path>`). What next?"
 
 Options:
-- "Yes, proceed to /plan" — Create phased implementation plan from
-  this spec
-- "Plan and ship (/plan-implement-ship)" — Plan, implement, and ship
+- "Yes, proceed to /feature-plan" — Create phased implementation plan
+  from this spec
+- "Plan and ship (/auto-implement)" — Plan, implement, and ship
   in one flow
 - "Review spec first" — I want to review/edit the spec before planning
 - "Done for now" — I'll plan later
 
-If the user selects "Yes, proceed to /plan", immediately invoke the
-**plan** skill (via the Skill tool) with the spec doc path as context,
+If the user selects "Yes, proceed to /feature-plan", immediately invoke
+the **feature-plan** skill (via the Skill tool) with the spec doc path as context,
 noting that design decisions are already resolved in the spec.
 
 If the user selects "Plan and ship", immediately invoke the
-**plan-implement-ship** skill (via the Skill tool) with the spec doc
+**auto-implement** skill (via the Skill tool) with the spec doc
 path as context.
 
 ## Hard Gate
 
 Do NOT write code during brainstorming. This skill produces a spec,
 not implementation. If the user asks to start coding, suggest completing
-the brainstorm first, then using `/plan` followed by `/implement`.
+the brainstorm first, then using `/feature-plan` followed by `/implement`.
 
 ## Common Mistakes
 

@@ -25,7 +25,7 @@ offer to resume from the recorded step. If stale, delete it and start
 fresh.
 
 **Autonomous mode**: If the state file contains
-`mode: "implement-ship-all"` or `mode: "plan-implement-ship"`, skip all confirmation prompts:
+`mode: "auto-implement"`, skip all confirmation prompts:
 - Resume automatically from the recorded step without asking
   "Resume or start over?"
 - Step 2: Do not ask "Starting {phase}. Proceed?" — start immediately
@@ -51,9 +51,9 @@ deterministic resume behavior and a clean state for subsequent skills.
 - Read the plan and identify which phases are `TODO` or `IN_PROGRESS`.
 - Check that the Plan phase is marked `DONE` in the status table. If it's
   still `TODO` or `IN_PROGRESS`, the plan hasn't been approved — suggest
-  completing the **plan** skill first.
+  completing the **feature-plan** skill first.
 - If no plan exists, ask the user: create a plan first (using the
-  **plan** skill), or implement ad-hoc without one?
+  **feature-plan** skill), or implement ad-hoc without one?
 
 **Gitignore check**: Before writing `.workflow-state.json`, check if
 `.gitignore` exists and contains `.workflow-state.json`. If the entry is
@@ -96,8 +96,9 @@ follow the same structure.
 **Stay on scope**: Only implement what the plan specifies for this phase.
 Before modifying a file, cross-check it against the plan's file lists for
 this phase. If the file is not listed, stop and ask the user: add it to
-the current phase, defer it to a future phase, or document it in the
-project's dev docs todo file and continue.
+the current phase, defer it to a future phase, or add it to the project's
+dev docs TODO file (see `../../shared-references/todo-convention.md`) and
+continue. In autonomous mode: add it to the TODO file and continue.
 
 After execution, determine the phase status (see Phase Execution
 Statuses below). If the status is not `IMPLEMENTED`, handle according
@@ -145,8 +146,9 @@ Spawn three agents in parallel:
 
 Collect findings from all three. Fix blockers and warnings, then re-run
 Stage 2. Cap at 3 iterations — if the 3rd iteration still has blockers,
-stop and inform the user. Suggestions may be deferred — document them
-in the plan's Notes section.
+stop and inform the user. Suggestions may be deferred — add them to
+the project's dev docs TODO file (see
+`../../shared-references/todo-convention.md`) with the phase name as source.
 
 **Fallback**: If any agent type is unavailable, fall back to a
 general-purpose agent with the same focus prompt.
@@ -193,7 +195,7 @@ After executing a phase (Step 3), assign one of these statuses:
   flagged doubts (e.g., approach may not scale, test coverage is
   uncertain, edge case handling is unclear). Concerns are surfaced to
   the user before shipping. In autonomous mode
-  (`mode: "implement-ship-all"` or `mode: "plan-implement-ship"`), log the concerns in the plan's Notes
+  (`mode: "auto-implement"`), log the concerns in the plan's Notes
   and proceed.
 - **`NEEDS_INPUT`** — blocked on a user decision (e.g., ambiguous
   requirement, design choice not covered by the plan). In autonomous
@@ -217,7 +219,7 @@ Stop fixing and escalate to the user when:
 - **You don't understand why something fails**: If you cannot explain
   the root cause, do not try random fixes. Ask for help.
 
-**In autonomous mode** (`mode: "implement-ship-all"` or `mode: "plan-implement-ship"`): mark the phase
+**In autonomous mode** (`mode: "auto-implement"`): mark the phase
 as `BLOCKED`, log what was tried and what failed in the plan's Notes
 section, and stop the loop. Do not silently continue to the next phase
 unless it is explicitly independent (no dependency on the blocked
@@ -253,7 +255,9 @@ phase).
 - **pytest temp-file failures in worktrees**: On WSL2, pytest may fail
   with permission or path errors on temporary files. Prefix test commands
   with `TMPDIR=/tmp/claude-1000` (e.g., `TMPDIR=/tmp/claude-1000 pytest`)
-  to ensure temp files land in a sandbox-writable location.
+  to ensure temp files land in a sandbox-writable location. If failures
+  persist with `--capture` (FileNotFoundError on fd writes), add
+  `-p no:capture` to disable the capture plugin entirely.
 
 ## Common Mistakes
 
@@ -268,8 +272,8 @@ phase).
 
 ## Agent Catalog
 
-Agents available to the workflow automation skills. The plan skill uses
-`feature-dev:code-architect` for plan review — see plan/SKILL.md Step 3.
+Agents available to the workflow automation skills. The feature-plan skill uses
+`feature-dev:code-architect` for plan review — see ../feature-plan/SKILL.md Step 3.
 
 **Review agents:**
 - `feature-dev:code-reviewer` — bugs, logic errors, security

@@ -29,7 +29,7 @@ from the recorded step. Key resume scenarios:
   if the cron job still exists (CronList); if not, re-invoke monitor-pr.
 
 **Autonomous mode**: If the state file contains
-`mode: "implement-ship-all"` or `mode: "plan-implement-ship"`, skip all confirmation prompts:
+`mode: "auto-implement"`, skip all confirmation prompts:
 - Resume automatically from the recorded step without asking
   "Resume or start over?"
 - Step 1: If the phase is `IMPLEMENTED`, proceed directly without
@@ -49,7 +49,7 @@ Before shipping, confirm the phase is ready:
 **Read state file**: At the start of this step, read `.workflow-state.json`
 if it exists and extract the `mode` field.
 
-**If `mode` is `"implement-ship"` or `"implement-ship-all"`** (ship is
+**If `mode` is `"auto-implement"`** (ship is
 part of a combined flow): skip the fresh test/build verification —
 implement just ran tests moments ago in the same session. Still check
 plan status below.
@@ -72,7 +72,7 @@ issues first. On WSL2, prefix test commands with
   it first or ship as-is.
 - If the phase is `IMPLEMENTED_WITH_CONCERNS`, surface the concerns to
   the user and ask whether to proceed. In autonomous mode
-  (`mode: "implement-ship-all"` or `mode: "plan-implement-ship"`), log the concerns in the plan's Notes
+  (`mode: "auto-implement"`), log the concerns in the plan's Notes
   and proceed — the implement skill already surfaced them.
 - Mark the `Ship` phase as `IN_PROGRESS` in the plan's status table (or
   add a note if no status table exists).

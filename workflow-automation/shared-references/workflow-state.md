@@ -1,7 +1,7 @@
 # Workflow State File
 
-All workflow skills (implement, ship, monitor-pr, implement-ship,
-implement-ship-all) use a shared `.workflow-state.json` file for
+All workflow skills (implement, ship, monitor-pr, auto-implement) use
+a shared `.workflow-state.json` file for
 cross-session resume. This file is written at key step transitions
 and read on startup to detect resumable work.
 
@@ -23,7 +23,7 @@ Add it to `.gitignore` to avoid committing it.
   "worktree": "../feat-csv-export-phase2",
   "pr_number": null,
   "monitor_cron_id": null,
-  "mode": "implement-ship-all",
+  "mode": "auto-implement",
   "last_updated": "2026-03-10T14:32:00Z"
 }
 ```
@@ -41,7 +41,7 @@ Add it to `.gitignore` to avoid committing it.
 | `worktree` | string \| null | Worktree path, or null if using a regular branch |
 | `pr_number` | number \| null | PR number if created, otherwise null |
 | `monitor_cron_id` | string \| null | CronCreate job ID if monitoring is active |
-| `mode` | string | `single` (one phase), `implement-ship`, `implement-ship-all`, or `plan-implement-ship` (autonomous, same behavior as `implement-ship-all`) |
+| `mode` | string \| null | `"auto-implement"` (autonomous) or `null`/absent (standalone, one phase at a time) |
 | `last_updated` | string | ISO 8601 timestamp |
 
 ## Read Protocol (all skills)
@@ -56,7 +56,7 @@ On startup, before doing anything else:
    the state file and start fresh.
 4. If the state is valid, offer to resume: "Found in-progress work:
    {skill} step {step} ({step_name}) for {phase}. Resume or start over?"
-5. In **autonomous mode** (invoked by implement-ship-all): resume
+5. In **autonomous mode** (invoked by auto-implement): resume
    automatically without asking.
 
 ## Write Protocol (per skill)
@@ -64,7 +64,7 @@ On startup, before doing anything else:
 ### implement
 - **Step 2** (phase selected): Write initial state with skill=implement, step=2
 - **Step 3** (executing): Update step=3
-- **Step 5** (deep review): Update step=5
+- **Step 5** (review loop): Update step=5
 - **Step 7** (update plan): Update step=7, then clear state after completion
 - **Step 8** (next steps): Advisory only — no state update
 
@@ -77,13 +77,9 @@ On startup, before doing anything else:
 - **Step 4** (cron created): Update skill=monitor-pr, set monitor_cron_id
 - **Post-merge cleanup**: Delete the state file after successful merge.
 
-### implement-ship
+### auto-implement
 - Delegates to implement and ship, which handle their own state.
-  The `mode` field is set to `"implement-ship"`.
-
-### implement-ship-all
-- Delegates to implement and ship, which handle their own state.
-  The `mode` field is set to `"implement-ship-all"`.
+  The `mode` field is set to `"auto-implement"`.
 
 ## Lifecycle
 
