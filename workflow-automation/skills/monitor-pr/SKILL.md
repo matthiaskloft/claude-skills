@@ -219,15 +219,16 @@ Check the status of PR #{pr_number} (branch: {branch}) and take action:
       - If no actionable comments remain (all non-actionable or empty): proceed to merge.
 
    b. Merge:
-      gh pr merge {pr_number} {merge_strategy} --delete-branch
+      gh pr merge {pr_number} {merge_strategy}
    - On success: cancel this cron job (CronDelete job {cron_job_id}). Say "PR #{pr_number} merged successfully."
      Then clean up:
-     c. Ensure CWD is the main repo root. Verify clean working tree (git status --porcelain). If clean, switch to main: git checkout {main_branch}. If dirty, warn the user and skip branch deletion — do not force-checkout over uncommitted changes.
-        Delete the local branch with git branch -d {branch}. If -d fails (branch not fully merged into current HEAD), use git branch -D {branch} — this is safe because the PR was just merged on the remote. (The remote branch was already deleted by `--delete-branch` above.)
-     d. If {remote_url_switched} is "true", restore the original remote URL: git remote set-url origin {original_remote_url}
-     e. Run git pull origin {main_branch}. If it fails due to uncommitted local changes, report the error — do not stash automatically.
-     f. If {plan_file} is not "none": update the current phase to MERGED with the PR URL in {plan_file}, then check remaining TODO phases: TODO_COUNT=$(grep -c "| TODO |" "{plan_file}" || echo "0"). If TODO_COUNT is 0, rename the plan: git mv "{plan_file}" "{plan_file%.md}-done.md" 2>/dev/null || mv "{plan_file}" "{plan_file%.md}-done.md" && git commit -m "mark plan complete". Inform the user of remaining phases or completion. If {plan_file} is "none", skip plan updates.
-     g. Clean up state: rm .workflow-state.json
+     c. Delete the remote branch: `git push origin --delete {branch} || true` (the branch may already be deleted by GitHub's auto-delete setting).
+     d. Ensure CWD is the main repo root. Verify clean working tree (git status --porcelain). If clean, switch to main: git checkout {main_branch}. If dirty, warn the user and skip branch deletion — do not force-checkout over uncommitted changes.
+        Delete the local branch with git branch -d {branch}. If -d fails (branch not fully merged into current HEAD), use git branch -D {branch} — this is safe because the PR was just merged on the remote.
+     e. If {remote_url_switched} is "true", restore the original remote URL: git remote set-url origin {original_remote_url}
+     f. Run git pull origin {main_branch}. If it fails due to uncommitted local changes, report the error — do not stash automatically.
+     g. If {plan_file} is not "none": update the current phase to MERGED with the PR URL in {plan_file}, then check remaining TODO phases: TODO_COUNT=$(grep -c "| TODO |" "{plan_file}" || echo "0"). If TODO_COUNT is 0, rename the plan: git mv "{plan_file}" "{plan_file%.md}-done.md" 2>/dev/null || mv "{plan_file}" "{plan_file%.md}-done.md" && git commit -m "mark plan complete". Inform the user of remaining phases or completion. If {plan_file} is "none", skip plan updates.
+     h. Clean up state: rm .workflow-state.json
    - On failure: report the error to the user. Do NOT cancel monitoring — the issue may resolve on the next cycle.
 ```
 
