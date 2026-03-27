@@ -1,5 +1,6 @@
 ---
 name: code-sentinel
+user_invocable: true
 description: >
   Orchestrates independent code review via specialised subagents that audit uncommitted
   changes for bugs, security issues, silent errors, and logical inconsistencies with

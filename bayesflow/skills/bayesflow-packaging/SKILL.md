@@ -1,4 +1,6 @@
 ---
+name: bayesflow-packaging
+user_invocable: true
 description: >
   Use when adding new modules, exports, or dependencies to BayesFlow extension
   packages — managing __all__, pyproject.toml, optional extras, CI configuration,

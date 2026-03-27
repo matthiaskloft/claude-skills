@@ -1,5 +1,6 @@
 ---
 name: auto-implement
+user_invocable: true
 description: >
   Plan, implement, and ship a feature end-to-end. Use when the user says
   "plan and ship", "auto-implement", "/auto-implement", "design and build",

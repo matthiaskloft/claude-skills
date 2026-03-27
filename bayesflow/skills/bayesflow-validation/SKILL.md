@@ -1,4 +1,6 @@
 ---
+name: bayesflow-validation
+user_invocable: true
 description: >
   Use when implementing or running SBC (simulation-based calibration)
   validation, calibration diagnostics, coverage analysis, or quality
