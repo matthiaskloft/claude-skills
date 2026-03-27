@@ -1,4 +1,6 @@
 ---
+name: bayesflow-adapter
+user_invocable: true
 description: >
   Use when creating, modifying, or debugging BayesFlow adapters — the data
   preprocessing pipelines that transform simulator output into the schema

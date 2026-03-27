@@ -1,4 +1,6 @@
 ---
+name: bayesflow-testing
+user_invocable: true
 description: >
   Use when writing, modifying, or debugging tests for BayesFlow extension
   packages. Triggers on: write tests, add test, test pattern, conftest, pytest,

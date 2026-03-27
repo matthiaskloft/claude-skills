@@ -1,4 +1,6 @@
 ---
+name: bayesflow-simulator
+user_invocable: true
 description: >
   Use when creating, modifying, or debugging BayesFlow 2.x simulators — data
   generating processes with prior, likelihood, and meta functions. Triggers on:

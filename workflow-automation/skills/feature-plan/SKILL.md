@@ -1,5 +1,6 @@
 ---
 name: feature-plan
+user_invocable: true
 description: >
   Create a structured feature plan document before implementation. Use when the
   user says "plan a feature", "design this", "create a plan", "let's plan",

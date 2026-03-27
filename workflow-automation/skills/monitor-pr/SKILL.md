@@ -1,5 +1,6 @@
 ---
 name: monitor-pr
+user_invocable: true
 description: >
   Monitor a PR's CI status in the background and auto-merge when ready. Use when
   the user says "monitor this PR", "watch CI", "monitor-pr", "/monitor-pr",

@@ -1,4 +1,6 @@
 ---
+name: keras-ops
+user_invocable: true
 description: >
   Use when writing or modifying code that performs tensor math in BayesFlow
   extensions — loss functions, custom Keras layers, network forward passes,

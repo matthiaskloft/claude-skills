@@ -1,4 +1,6 @@
 ---
+name: bayesflow-memory
+user_invocable: true
 description: >
   Use when dealing with GPU memory issues, CUDA OOM errors, training crashes,
   or optimizing memory usage in BayesFlow training. Triggers on: OOM, out of

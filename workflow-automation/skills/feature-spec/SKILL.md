@@ -1,5 +1,6 @@
 ---
 name: feature-spec
+user_invocable: true
 description: >
   Explore a feature idea and produce a spec doc before planning. Use when
   the user says "feature-spec", "explore this idea", "let's discuss the

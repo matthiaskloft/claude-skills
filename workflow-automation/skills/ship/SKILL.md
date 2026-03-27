@@ -1,5 +1,6 @@
 ---
 name: ship
+user_invocable: true
 description: >
   Ship a completed phase: commit, create a PR, monitor CI, and merge. Use when
   the user says "ship this", "create a PR", "open a pull request", "commit and

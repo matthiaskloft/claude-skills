@@ -1,5 +1,6 @@
 ---
 name: implement
+user_invocable: true
 description: >
   Implement a feature from a plan document, working phase by phase. Use when
   the user says "implement this plan", "start building", "implement phase",
