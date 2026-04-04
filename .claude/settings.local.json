@@ -1,10 +1,9 @@
 {
-  "_comment": "Maximum-privilege baseline for autonomous workflow operation. Read/Write/Edit wildcards grant unrestricted file access within the sandbox. Narrow these for less-privileged projects (e.g., Write(src/**)).",
   "permissions": {
     "allow": [
       "Bash(git:*)",
-	  "Bash(git fetch:*)",
-	  "WebFetch(domain:api.github.com)",      
+      "Bash(git fetch:*)",
+      "WebFetch(domain:api.github.com)",
       "WebFetch(domain:github.com)",
       "Bash(gh:*)",
       "Bash(which:*)",
@@ -17,12 +16,16 @@
       "Write(*)",
       "Edit(*)",
       "Glob(*)",
-      "Grep(*)"	  
+      "Grep(*)"
     ]
   },
   "sandbox": {
     "enabled": true,
     "autoAllowBashIfSandboxed": true,
-    "excludedCommands": ["git", "gh"]
-  }
+    "excludedCommands": [
+      "git",
+      "gh"
+    ]
+  },
+  "_comment": "Maximum-privilege baseline for autonomous workflow operation. Read/Write/Edit wildcards grant unrestricted file access within the sandbox. Narrow these for less-privileged projects (e.g., Write(src/**))."
 }

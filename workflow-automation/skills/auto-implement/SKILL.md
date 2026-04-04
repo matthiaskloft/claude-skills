@@ -46,11 +46,10 @@ not re-confirm.
 
 ## Step-by-Step
 
-### 0. Context Reset
+### 0. Context Anchor
 
-Auto-implement is a long-running autonomous workflow that consumes
-significant context. Before starting, clear stale conversation history
-so the run has maximum room.
+Auto-implement is a long-running autonomous workflow. Before starting,
+capture key information and establish a clear starting point.
 
 1. **Capture essentials** — note down (in your working memory, not a
    file) the information you need to proceed:
@@ -58,16 +57,12 @@ so the run has maximum room.
    - Path to any existing plan file (if referenced or found)
    - Any explicit user preferences stated in this conversation
      (e.g., shipping strategy, branch naming)
-2. **Ask the user to clear context** — output:
-   "Before starting the autonomous run, please type `/clear` to free
-   up context. I've captured everything I need to proceed."
-   Wait for the user's next message (which arrives after the clear).
-3. **Re-anchor** — after the clear, output a single line:
+2. **Anchor** — output a single line:
    "Auto-implement starting: {one-sentence task summary}" so the
    conversation has a clear starting point. Then proceed to Step 0b.
 
 Skip this step when resuming from `.workflow-state.json` — resumed
-runs already start with a clean context.
+runs already start with the necessary context.
 
 ### 0b. Permission and Sandbox Pre-flight
 
