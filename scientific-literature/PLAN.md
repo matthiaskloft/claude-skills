@@ -58,6 +58,9 @@ claude-skills/
     │   ├── pipeline-state-schema.md          # pipeline_state.json schema
     │   ├── index-schema.md                   # _index.json schema
     │   └── litreview-yaml-reference.md       # Config file documentation
+    ├── agents/                           # Agent prompt files (invoked by /lit-run)
+    │   ├── lit-abstract-reviewer.md      # haiku worker: abstract screening
+    │   └── lit-triager.md                # sonnet worker: full-text triage
     └── skills/
         ├── lit-guide/SKILL.md
         ├── lit-plan/SKILL.md
@@ -73,7 +76,7 @@ claude-skills/
 
 ---
 
-## Skills (11 total)
+## Skills (10 total)
 
 ### Core skills (all repos)
 
@@ -99,7 +102,7 @@ claude-skills/
 
 ## Agents (2)
 
-Both agents are **generic workers**. Their `.md` files declare explicitly what project-specific inputs they require. The `/lit-run` orchestrator assembles these from `litreview/categories.yaml` + other config, then passes them at invocation.
+Both agents are **generic workers** located in `scientific-literature/agents/`. Their `.md` files declare explicitly what project-specific inputs they require. The `/lit-run` skill resolves agent paths relative to the plugin root via `<plugin-path>/agents/<name>.md` and passes them to `claude --agent` at invocation. The `/lit-run` orchestrator assembles required inputs from `litreview/categories.yaml` + other config before invoking each agent.
 
 | Agent | Model | Required inputs from orchestrator |
 |-------|-------|-----------------------------------|
@@ -193,7 +196,7 @@ class ReferenceIndex:
     def get(self, citekey) -> dict | None
     def find_by_doi(self, doi) -> tuple[str, dict] | None
     def find_by_title(self, title, threshold=0.8) -> tuple[str, dict] | None
-    def generate_citekey(self, authors, year) -> str
+    def generate_citekey(self, authors: list[str], year: int) -> str   # uses authors[0] last name
     def to_references_md(self, output_path)      # auto-generates APA 7 .md
 ```
 
@@ -234,6 +237,8 @@ litreview/
 }
 ```
 
+**Path scope:** WSL POSIX paths only (`/mnt/c/...`). Native Windows paths (`C:\...`) are not supported. All file I/O in `zotero_local.py` and `arxiv_client.py` uses Python's `pathlib.Path` with POSIX semantics.
+
 ---
 
 ## Reference Data Formats
@@ -242,12 +247,16 @@ litreview/
 ```json
 {
   "akiba_et_al_2019": {
-    "title": "Optuna: ...", "authors": "Akiba, T., ...", "year": 2019,
+    "title": "Optuna: ...",
+    "authors": ["Akiba, T.", "Sano, S.", "Yanase, T.", "Ohta, T.", "Koyama, M."],
+    "authors_str": "Akiba, T., Sano, S., Yanase, T., Ohta, T., & Koyama, M.",
+    "year": 2019,
     "journal": "KDD 2019", "doi": "https://doi.org/10.1145/3292500.3330701",
     "openalex_id": "https://openalex.org/W...",
-    "category": "optuna", "source": "fulltext|abstract",
+    "categories": ["optuna"],
+    "source": ["fulltext"],
     "pdf": "docs/references/akiba_et_al_2019.pdf",
-    "apa7": "Akiba, T., ... (2019). Optuna ...",
+    "apa7": "Akiba, T., Sano, S., Yanase, T., Ohta, T., & Koyama, M. (2019). Optuna ...",
     "added_at": "2026-04-04"
   }
 }
@@ -302,8 +311,33 @@ Parallel adoption — preserve completed pipeline work:
 
 ## Verification
 
+### Happy path
 1. `/lit-validate 10.1145/3292500.3330701` — matches existing `bayesflow_hpo/docs/references.md` Akiba entry
-2. `/lit-cite 10.1145/3292500.3330701` — APA 7 output matches manual version
-3. `/lit-acquire` for a Zotero-held paper — finds via SQLite, copies PDF, updates `_index.json`
+2. `/lit-cite 10.1145/3292500.3330701` — APA 7 output matches manual version; `authors` list populated, `authors_str` and `apa7` fields correct
+3. `/lit-acquire` for a Zotero-held paper — finds via SQLite, copies PDF, updates `_index.json` with `pdf` path
 4. Full pipeline for `bayesflow_irt_article` A6-A8 — output consistent with existing artifacts
 5. Auto-generated `references.md` from `_index.json` — diffs cleanly against existing `bayesflow_hpo/docs/references.md`
+
+### Failure / edge cases
+6. `/lit-validate` on an unknown DOI — returns not-found cleanly, no crash, no partial write to `_index.json`
+7. `/lit-cite` for a paper already in `_index.json` — duplicate detected via `find_by_doi`, existing entry returned without overwrite
+8. APA 7 formatting for a preprint (arXiv) and a book chapter — `format_apa7()` selects correct template by publication type
+9. `/lit-acquire` for a paper not in Zotero and not OA — all fallbacks exhausted, failure reported with actionable message
+10. `generate_citekey` collision (two papers with same first-author last name and year) — disambiguated with `a`/`b` suffix
+
+### Non-IRT bootstrap
+11. `/lit-plan` run from scratch in `bayesflow_hpo` — scaffolds `litreview.yaml`, `litreview/` directory, and `_index.json` from existing `docs/references.md`; no IRT-specific config required
+
+---
+
+## Review Notes
+
+Adversarial review conducted 2026-04-04. All findings resolved in this document.
+
+| # | Severity | Finding | Resolution |
+|---|----------|---------|------------|
+| 1 | High | No `agents/` directory or discovery story | Added `agents/` to plugin structure; agents section now specifies path resolution via `<plugin-path>/agents/<name>.md` |
+| 2 | High | `_index.json` authors stored as string, not list; pipe-delimited source; single category | Schema updated: `authors` is now a list, `authors_str` holds APA-formatted string, `source` is a list, `categories` is a list |
+| 3 | Medium | WSL paths implied but not scoped | Explicitly scoped to WSL POSIX paths only; native Windows paths not supported |
+| 4 | Medium | Verification too narrow — no failure cases or non-IRT bootstrap | Expanded to 11 checks covering failure modes, APA edge cases, duplicate handling, and `bayesflow_hpo` bootstrap |
+| 5 | Low | Skill count said 11 but only 10 defined | Corrected to "10 total" |
