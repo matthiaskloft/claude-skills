@@ -25,6 +25,12 @@
       "description": "Plan/Implement/Ship workflow for feature development. Provides skills for structured planning, worktree-based implementation, and automated review/PR/CI shipping.",
       "source": "./workflow-automation",
       "category": "workflow"
+    },
+    {
+      "name": "scientific-literature",
+      "description": "Domain-agnostic literature management plugin with OpenAlex search/validation/citation, full-text acquisition, extraction, crawl, and pipeline orchestration skills.",
+      "source": "./scientific-literature",
+      "category": "scientific-computing"
     }
   ]
 }
