@@ -28,7 +28,7 @@
     },
     {
       "name": "scientific-literature",
-      "description": "Domain-agnostic literature management plugin with OpenAlex search/validation/citation, full-text acquisition, extraction, crawl, and pipeline orchestration skills.",
+      "description": "Domain-agnostic literature management plugin with OpenAlex search/validation/citation, LaTeX-safe BibTeX export, full-text acquisition, extraction, crawl, and pipeline orchestration skills.",
       "source": "./scientific-literature",
       "category": "scientific-computing"
     }

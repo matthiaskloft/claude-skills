@@ -1,5 +1,5 @@
 {
   "name": "scientific-literature",
-  "description": "Domain-agnostic scientific literature management. Provides skills for OpenAlex search, DOI validation, APA 7 citation, full-text acquisition via Zotero/arXiv, PDF extraction, citation crawling, and pipeline orchestration for systematic literature reviews.",
+  "description": "Domain-agnostic scientific literature management. Provides skills for OpenAlex search, DOI validation, APA 7 citation, BibTeX/LaTeX export, full-text acquisition via Zotero/arXiv, PDF extraction, citation crawling, and pipeline orchestration for systematic literature reviews.",
   "version": "0.1.0"
 }

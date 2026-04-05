@@ -49,6 +49,26 @@ A Plan/Implement/Ship workflow for structured feature development. Breaks large 
 
 **Usage (after installation):** Start with `/plan` to design a feature, then `/implement` to build it phase by phase, and `/ship` to get it merged. For a fully autonomous flow, use `/implement-ship-all` (or say "autopilot") to run from plan to merged PRs without stopping.
 
+---
+
+### scientific-literature
+
+Domain-agnostic literature management for research projects. Covers OpenAlex search and DOI validation, APA 7 citation generation, LaTeX-safe BibTeX export, full-text acquisition, extraction, citation crawling, and lightweight pipeline orchestration.
+
+| Skill | Description |
+|-------|-------------|
+| **lit-search** | Search OpenAlex for candidate papers and inspect normalized metadata |
+| **lit-validate** | Validate a DOI or title against OpenAlex before writing references |
+| **lit-cite** | Add a normalized citation to `_index.json` and regenerate `references.md` |
+| **lit-latex** | Export `references.bib`, lint BibTeX formatting, resolve citekeys, check `.tex` files, and optionally smoke-test LaTeX compilation |
+| **lit-acquire** | Locate full text via Zotero, OpenAlex OA links, or arXiv |
+| **lit-extract** | Extract structured markdown from PDFs |
+| **lit-crawl** | Expand forward and backward citation chains |
+| **lit-run** | Orchestrate multi-step review pipelines from tracked state |
+| **lit-status** | Inspect pipeline status without side effects |
+
+**Usage:** Ask Claude to search papers, validate references, generate citations, or maintain a LaTeX bibliography. For BibTeX verification, the plugin now includes offline sample fixtures and `scientific-literature/scripts/verify_latex.py`.
+
 ## Installation
 
 Install plugins using Claude Code's `/install-plugin` command. See the [Claude Code plugins documentation](https://docs.anthropic.com/en/docs/claude-code/plugins) for the latest syntax.
@@ -58,6 +78,7 @@ Install plugins using Claude Code's `/install-plugin` command. See the [Claude C
 /install-plugin matthiaskloft/claude-skills/bayesflow
 /install-plugin matthiaskloft/claude-skills/code-sentinel
 /install-plugin matthiaskloft/claude-skills/workflow-automation
+/install-plugin matthiaskloft/claude-skills/scientific-literature
 ```
 
 ## How it works
