@@ -16,7 +16,8 @@
       "Write(*)",
       "Edit(*)",
       "Glob(*)",
-      "Grep(*)"
+      "Grep(*)",
+      "Bash(python:*)"
     ]
   },
   "sandbox": {
