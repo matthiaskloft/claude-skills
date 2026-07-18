@@ -121,6 +121,12 @@ maintainability.
 
 Run a two-stage code review cycle until the code is clean.
 
+Both stages handle findings per `../../shared-references/review-feedback-protocol.md`,
+with suggestions specifically deferred to the project's dev docs TODO file
+(see `../../shared-references/todo-convention.md`) with the phase name as
+source — judge whether each blocker/warning is actually justified before
+acting on it, don't apply findings blindly.
+
 **Stage 1 — Spec compliance** (mandatory, runs first):
 
 Spawn an agent (`subagent_type="feature-dev:code-reviewer"`) with the
@@ -130,15 +136,6 @@ steps were addressed, (2) no over-building beyond the plan's scope,
 (3) pattern consistency — new code replicates the architectural patterns
 established in the same file or module. For each finding, state severity
 (blocker/warning/suggestion) and a concrete fix."
-
-Handle feedback: judge whether each finding is justified before acting.
-- **Blockers**: Fix every justified blocker. Dismiss unjustified blockers
-  with a brief rationale.
-- **Warnings**: Evaluate each warning — fix if warranted, otherwise note
-  why it was dismissed.
-- **Suggestions**: Defer to the project's dev docs TODO file (see
-  `../../shared-references/todo-convention.md`) with the phase name as
-  source.
 
 Re-run Stage 1 after any fixes. Cap at 2 iterations — if spec compliance
 still has justified blockers after 2 rounds, stop and inform the user.
@@ -153,21 +150,9 @@ Spawn three agents in parallel:
 - `subagent_type="pr-review-toolkit:pr-test-analyzer"` — test coverage
   quality and critical gaps
 
-Collect findings from all three. Judge whether each finding is justified
-before acting:
-- **Blockers**: Fix every justified blocker. Dismiss unjustified blockers
-  with a brief rationale.
-- **Warnings**: Evaluate each warning — fix if warranted, otherwise note
-  why it was dismissed.
-- **Suggestions**: Defer to the project's dev docs TODO file (see
-  `../../shared-references/todo-convention.md`) with the phase name as
-  source.
-
-Re-run Stage 2 after any fixes. Cap at 3 iterations — if the 3rd
-iteration still has justified blockers, stop and inform the user.
-
-**Fallback**: If any agent type is unavailable, fall back to a
-general-purpose agent with the same focus prompt.
+Collect findings from all three. Re-run Stage 2 after any fixes. Cap at
+3 iterations — if the 3rd iteration still has justified blockers, stop
+and inform the user.
 
 See the **Agent Catalog** at the end of this file for the full list of
 available agents and their roles.

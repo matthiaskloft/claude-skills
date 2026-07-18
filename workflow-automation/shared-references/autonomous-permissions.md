@@ -81,37 +81,21 @@ Only proceed when all test commands pass without prompts.
 
 ## Required Configuration
 
-For autonomous operation without approval prompts, the project needs:
+The two prerequisites are the `.claude/commands/` directory and the sandbox
+block in `.claude/settings.local.json` — see the Failure Message above for
+what to run and why each part matters. Two additional notes not covered
+there:
 
-1. **`.claude/commands/` directory** — must exist (even if empty).
-   The sandbox checks for this directory; without it, git and gh
-   commands are blocked.
+- `CronCreate`, `CronDelete`, `CronList`, and `Agent` do not require
+  explicit permission entries.
+- The permissions template also includes granular `Bash(git:*)` etc.
+  entries as a fallback for when the sandbox is disabled — with the
+  sandbox enabled, they're redundant, since `autoAllowBashIfSandboxed`
+  already covers everything.
 
-2. **`.claude/settings.local.json`** with the sandbox block from
-   the permissions template:
-   `cp <plugin-path>/shared-references/permissions-template.json .claude/settings.local.json`
-
-   `CronCreate`, `CronDelete`, `CronList`, and `Agent` do not
-   require explicit permission entries.
-
-The `sandbox` block is the key to zero-prompt autonomous runs:
-- `enabled: true` restricts file writes to the project directory
-- `autoAllowBashIfSandboxed: true` auto-approves **all** bash
-  commands within that sandbox — no per-language or per-tool
-  permission entries needed (R, Python, Node, test runners, etc.
-  are all covered)
-- `excludedCommands: ["git", "gh"]` exempts git and gh from sandbox
-  restrictions — without this, the sandbox denies writes to `.git/`
-  internals and every git command falls back to
-  `dangerouslyDisableSandbox`
-
-Note: The template includes granular `Bash(git:*)` etc. entries as
-a fallback for when sandbox is disabled. With sandbox enabled, they
-are redundant — `autoAllowBashIfSandboxed` covers everything.
-
-If permissions are not configured, the skill still works but will
-pause for user approval on each tool call — defeating the purpose
-of autonomous mode.
+If permissions are not configured, the skill still works but will pause
+for user approval on each tool call — defeating the purpose of autonomous
+mode.
 
 ## Never bypass the sandbox
 

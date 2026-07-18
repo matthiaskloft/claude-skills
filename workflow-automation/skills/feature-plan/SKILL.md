@@ -95,58 +95,29 @@ Key sections to get right:
 
 ### 3. Independent Plan Review (Iterative)
 
-Review the plan in a loop until no new issues are found:
+Spawn a review agent using the Agent tool (`subagent_type="feature-dev:code-architect"`,
+default model — architectural reasoning requires deep context) with this focus
+prompt: "Review this feature plan against the existing codebase. Verify:
+(1) feasibility — do the referenced files, APIs, and patterns exist,
+(2) gaps — are there missing phases, dependencies, or edge cases,
+(3) risks — could any phase break existing functionality,
+(4) scope — is each phase independently shippable.
+Cross-check any enum values, parameter names, and framework-specific
+constants mentioned in the plan against actual codebase definitions —
+verify against validators and class constructors.
+For each finding, state severity (blocker/warning/suggestion)
+and a concrete recommendation. End with: Review complete: X findings
+(Y blockers, Z warnings)." Pass the plan document and any relevant source
+files the plan references.
 
-**Review loop:**
-
-1. Spawn a review agent using the Agent tool
-   (`subagent_type="feature-dev:code-architect"`) with this focus prompt:
-   "Review this feature plan against the existing codebase. Verify:
-   (1) feasibility — do the referenced files, APIs, and patterns exist,
-   (2) gaps — are there missing phases, dependencies, or edge cases,
-   (3) risks — could any phase break existing functionality,
-   (4) scope — is each phase independently shippable.
-   Cross-check any enum values, parameter names, and framework-specific
-   constants mentioned in the plan against actual codebase definitions —
-   verify against validators and class constructors.
-   For each finding, state severity (blocker/warning/suggestion)
-   and a concrete recommendation. End with: Review complete: X findings
-   (Y blockers, Z warnings)."
-   Use the default model — architectural reasoning requires deep context.
-   - Pass the plan document and any relevant source files the plan references
-   - Wait for the reviewer to return
-
-2. Handle feedback:
-   - **Blockers**: Revise the plan to address every blocker. If a blocker
-     requires a user decision (e.g., ambiguous scope, conflicting
-     constraints), use AskUserQuestion to present the options with
-     descriptions rather than plain text questions.
-   - **Warnings**: Evaluate each warning — revise the plan if warranted,
-     otherwise note it in the plan's "Review Feedback" section
-   - **Suggestions**: Include in the plan's "Review Feedback" section for
-     the user to see
-
-3. If any revisions were made in step 2, repeat the review loop: re-run
-   step 1 on the updated plan. Prepend the reviewer prompt with: "This is
-   iteration N. Changes since last review: [list the specific sections
-   revised and what changed]." This helps the reviewer focus on the changes
-   and avoid re-raising already-addressed issues.
-
-4. Stop when **no revisions were made in step 2** — i.e., all blockers have
-   been addressed, all warnings have been either addressed or noted without
-   requiring changes, and only suggestions (or no findings) remain.
-
-5. Record the iteration count in the plan's "Review Feedback" section
-   (e.g., "Plan reviewed in 2 iterations") so the user can gauge how
-   contested the plan was.
-
-**Guard rail**: Cap the loop at 3 total review iterations. If the 3rd
-review still returns blockers that would require more revisions, stop
-there, present the plan with those unresolved issues clearly flagged,
-and ask the user for guidance instead of starting a 4th cycle.
-
-**Fallback**: If the Agent tool is unavailable, note in the plan that it
-was not independently reviewed and present it directly to the user.
+Handle the returned findings per `../../shared-references/review-feedback-protocol.md`,
+revising the plan and re-running the review until no revisions are needed.
+Cap at 3 total iterations; if blockers persist past that, present the plan
+with unresolved issues flagged and ask the user for guidance instead of a
+4th cycle. When forwarding the plan for a repeat review, prepend: "This is
+iteration N. Changes since last review: [list what changed]" so the reviewer
+doesn't re-raise already-addressed issues. Record the iteration count in the
+plan's "Review Feedback" section (e.g., "Plan reviewed in 2 iterations").
 
 ### 4. Present for Review
 

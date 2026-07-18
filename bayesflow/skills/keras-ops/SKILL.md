@@ -30,24 +30,6 @@ x = torch.sum(tensor, dim=-1)
 y = np.exp(tensor)  # numpy on a Keras tensor
 ```
 
-## Common Operations Reference
-
-| Operation | keras.ops | NOT this |
-|-----------|-----------|----------|
-| Sum | `keras.ops.sum(x, axis=)` | `torch.sum()`, `np.sum()` |
-| Mean | `keras.ops.mean(x, axis=)` | `x.mean()` |
-| Exp/Log | `keras.ops.exp(x)` / `keras.ops.log(x)` | `torch.exp()` |
-| Reshape | `keras.ops.reshape(x, shape)` | `x.view()`, `x.reshape()` |
-| Concat | `keras.ops.concatenate([a, b], axis=)` | `torch.cat()` |
-| Expand | `keras.ops.expand_dims(x, axis=)` | `x.unsqueeze()` |
-| Sort | `keras.ops.sort(x, axis=)` | `torch.sort()` |
-| Where | `keras.ops.where(cond, x, y)` | `torch.where()` |
-| Cast | `keras.ops.cast(x, "float32")` | `x.float()`, `float(x)` |
-| Stop grad | `keras.ops.stop_gradient(x)` | `x.detach()`, `torch.no_grad()` |
-| Linspace | `keras.ops.linspace(0, 1, n)` | `torch.linspace()` |
-| ReLU | `keras.ops.relu(x)` | `torch.relu()` |
-| Shape | `keras.ops.shape(x)` | `x.shape` (ok for static) |
-
 ## Boundary Crossing: numpy <-> Keras
 
 When passing numpy arrays into Keras compute paths:
@@ -75,30 +57,9 @@ if keras.backend.backend() == "torch":
 
 Never put backend-specific code in the main compute path.
 
-## Pattern: Detached Sampling
-
-Cut gradients on sampling paths to save memory (calibration loss pattern):
-```python
-# Sample from inference network but DON'T backprop through sampling
-samples = keras.ops.stop_gradient(
-    self.inference_network.sample(n_samples, conditions)
-)
-# Only backprop through log_prob evaluation
-log_probs = self.inference_network.log_prob(samples, conditions)
-```
-
-## Pattern: Chunked Log-Prob
-
-Process large posterior sample sets in memory-bounded chunks:
-```python
-chunk_size = self.log_prob_chunk_size or n_samples
-log_probs_list = []
-for i in range(0, n_samples, chunk_size):
-    chunk = samples[:, i:i+chunk_size]
-    lp = self.inference_network.log_prob(chunk, conditions)
-    log_probs_list.append(lp)
-log_probs = keras.ops.concatenate(log_probs_list, axis=1)
-```
+Detached sampling and chunked log-prob (memory-saving patterns that build on
+`stop_gradient`/`concatenate`) live in the `bayesflow-memory` skill — see
+Strategies 4 and 5 there.
 
 ## Pattern: STE (Straight-Through Estimator)
 

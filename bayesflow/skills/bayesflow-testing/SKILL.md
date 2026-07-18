@@ -139,12 +139,8 @@ def test_adapter_output_schema():
 
 ## Deterministic RNG
 
-Always seed for reproducibility:
-```python
-rng = np.random.default_rng(42)
-```
-
-Never use `np.random.seed()` (global state) or unseeded generators in tests.
+Seed with `np.random.default_rng(42)`, not `np.random.seed()` (global state)
+or an unseeded generator — otherwise tests aren't reproducible.
 
 ## CI Matrix
 

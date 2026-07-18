@@ -84,9 +84,9 @@ simulator = bf.simulators.make_simulator(
 - **Meta**: `(shape: tuple, rng: np.random.Generator) -> np.ndarray`
 
 ### RNG discipline
-- ALWAYS accept `rng: np.random.Generator` — never use global `np.random`
-- Store `self._rng = np.random.default_rng()` in `__init__`
-- This ensures reproducibility with `np.random.default_rng(seed)`
+Accept `rng: np.random.Generator` everywhere (store as `self._rng` in
+`__init__`) — never call global `np.random.*`, or seeding via
+`np.random.default_rng(seed)` won't reproduce results.
 
 ### Output dict conventions
 - Parameter keys must match adapter `inference_variables` mapping

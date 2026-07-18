@@ -35,23 +35,9 @@ where = ["src"]
 
 ## `__all__` Management
 
-**Every public symbol MUST appear in both the import AND `__all__`** in
-`__init__.py`. When adding a new public function or class:
-
-```python
-# 1. Add the import
-from .module_a import MyNewClass, my_new_function
-
-# 2. Add to __all__
-__all__ = [
-    # ... existing exports ...
-    "MyNewClass",
-    "my_new_function",
-]
-```
-
-**Omitting from `__all__` makes the symbol invisible** to `from package import *`
-and IDE auto-completion for users.
+Every public symbol must appear in both the `__init__.py` import and `__all__` —
+omitting it makes the symbol invisible to `from package import *` and IDE
+auto-completion.
 
 ## Version Detection Pattern
 
@@ -71,7 +57,7 @@ except PackageNotFoundError:
 ```toml
 [build-system]
 requires = ["setuptools>=61.0"]
-build-backend = "setuptools.backends._legacy:_Backend"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "my-package"

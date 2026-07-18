@@ -9,12 +9,6 @@
   },
   "plugins": [
     {
-      "name": "code-sentinel",
-      "description": "Orchestrates independent code review via specialised subagents that audit uncommitted changes for bugs, security issues, silent errors, and logical inconsistencies. Specialised for R and Python.",
-      "source": "./code-sentinel",
-      "category": "code-quality"
-    },
-    {
       "name": "bayesflow-skills",
       "description": "Domain-specific skills for BayesFlow 2.x extension packages. Provides patterns for simulators, adapters, Keras 3 backend-agnostic math, testing, SBC validation, GPU memory management, and packaging conventions.",
       "source": "./bayesflow",
