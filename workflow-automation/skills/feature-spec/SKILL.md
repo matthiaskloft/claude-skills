@@ -134,38 +134,27 @@ Write the Spec section into a plan document:
 Run one automatic review after writing the spec — do not ask the user
 whether to review.
 
-1. Spawn a review agent using the Agent tool
-   (`subagent_type="feature-dev:code-architect"`) with this focus prompt:
-   "Review this spec (the `## Spec` section of the plan document)
-   against the existing codebase. Verify:
-   (1) feasibility — do the referenced APIs, patterns, and constraints
-   hold in the current codebase,
-   (2) completeness — are there missing requirements, edge cases, or
-   architectural concerns,
-   (3) consistency — do design decisions align with each other and with
-   project conventions,
-   (4) scope — is the scope clear and realistic, are in/out boundaries
-   well-defined.
-   For each finding, state severity (blocker/warning/suggestion) and a
-   concrete recommendation. End with: Review complete: X findings
-   (Y blockers, Z warnings)."
-   - Pass the plan document and any relevant source files it references
-   - Wait for the reviewer to return
+Spawn a review agent using the Agent tool (`subagent_type="feature-dev:code-architect"`)
+with this focus prompt: "Review this spec (the `## Spec` section of the plan
+document) against the existing codebase. Verify:
+(1) feasibility — do the referenced APIs, patterns, and constraints
+hold in the current codebase,
+(2) completeness — are there missing requirements, edge cases, or
+architectural concerns,
+(3) consistency — do design decisions align with each other and with
+project conventions,
+(4) scope — is the scope clear and realistic, are in/out boundaries
+well-defined.
+For each finding, state severity (blocker/warning/suggestion) and a
+concrete recommendation. End with: Review complete: X findings
+(Y blockers, Z warnings)." Pass the plan document and any relevant source
+files it references.
 
-2. Handle feedback:
-   - **Blockers**: Revise the spec to address every blocker. If a
-     blocker requires a user decision, use AskUserQuestion to present
-     the options.
-   - **Warnings**: Evaluate each warning — revise the spec if warranted,
-     otherwise note it in the Open Questions section
-   - **Suggestions**: Include in the Review Feedback section
-
-3. After all blocker revisions are applied, mark `Spec` as `DONE` in
-   the status table.
-
-**Fallback**: If the Agent tool is unavailable, note in the Review
-Feedback section that the spec was not independently reviewed and
-present it directly.
+Handle the returned findings per `../../shared-references/review-feedback-protocol.md`
+(blockers into the spec directly, warnings into Open Questions if not
+addressed, suggestions into Review Feedback). This is a single pass, not an
+iterative loop — after blocker revisions are applied, mark `Spec` as `DONE`
+in the status table.
 
 ### 8. Hand Off
 

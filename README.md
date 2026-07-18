@@ -1,6 +1,10 @@
 # claude-skills
 
-A monorepo of Claude Code plugins for scientific computing, code review, and workflow automation.
+A monorepo of Claude Code plugins for scientific computing and workflow automation.
+
+> **Note:** `code-sentinel` moved out of this marketplace. It's now a personal skill synced via
+> `agentic_coding_ressources/global-memory/skills/code-sentinel/`, auto-discovered on any machine
+> after `git pull` + `setup-skill-symlinks.sh` — no per-machine plugin install needed.
 
 ## Plugins
 
@@ -19,18 +23,6 @@ Domain-specific skills for [BayesFlow 2.x](https://github.com/bayesflow-org/baye
 | **bayesflow-packaging** | Package structure, `__all__` exports, `pyproject.toml`, and CI configuration |
 
 Skills trigger automatically based on task context (e.g., creating a simulator, debugging OOM errors, writing tests). You can also invoke them explicitly via the `bayesflow-skills:` namespace.
-
----
-
-### code-sentinel
-
-Independent code review via specialized subagents. Reviews uncommitted changes for bugs, security issues, silent errors, and logical inconsistencies. Specialized for **R** and **Python** codebases.
-
-| Skill | Description |
-|-------|-------------|
-| **code-sentinel** | Orchestrates independent review subagents that audit your diff with no prior context of the implementation |
-
-**Usage:** Ask Claude to "review my changes", "check my code before committing", or "audit this diff". The skill delegates to subagents that have no knowledge of the implementing conversation, ensuring unbiased review.
 
 ---
 
@@ -76,7 +68,6 @@ Install plugins using Claude Code's `/install-plugin` command. See the [Claude C
 ```shell
 # Install from GitHub directly
 /install-plugin matthiaskloft/claude-skills/bayesflow
-/install-plugin matthiaskloft/claude-skills/code-sentinel
 /install-plugin matthiaskloft/claude-skills/workflow-automation
 /install-plugin matthiaskloft/claude-skills/scientific-literature
 ```

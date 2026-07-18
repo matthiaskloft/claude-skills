@@ -48,21 +48,11 @@ not re-confirm.
 
 ### 0. Context Anchor
 
-Auto-implement is a long-running autonomous workflow. Before starting,
-capture key information and establish a clear starting point.
-
-1. **Capture essentials** — note down (in your working memory, not a
-   file) the information you need to proceed:
-   - The user's task description / feature request
-   - Path to any existing plan file (if referenced or found)
-   - Any explicit user preferences stated in this conversation
-     (e.g., shipping strategy, branch naming)
-2. **Anchor** — output a single line:
-   "Auto-implement starting: {one-sentence task summary}" so the
-   conversation has a clear starting point. Then proceed to Step 0b.
-
-Skip this step when resuming from `.workflow-state.json` — resumed
-runs already start with the necessary context.
+Auto-implement is a long-running autonomous workflow. Before starting
+(skip if resuming from `.workflow-state.json`, which already has this),
+output a single line: "Auto-implement starting: {one-sentence task
+summary}" so the conversation has a clear starting point. Then proceed
+to Step 0b.
 
 ### 0b. Permission and Sandbox Pre-flight
 
